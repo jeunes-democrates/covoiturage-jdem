@@ -1,0 +1,40 @@
+{% extends "meta.html" %}
+{% load static %}
+
+
+
+{% if page_title %}{% block title %}{{ page_title }} - {% endblock title %}{% endif %}
+
+
+
+{% block head %}{{ block.super }}
+
+{% endblock head %}
+
+
+
+{% block header %}
+
+{% endblock header %}
+
+
+
+{% block content %}
+
+	<!-- Main content displayed here -->
+
+{% endblock content %}
+
+
+
+{% block footer %}
+
+{% endblock footer %}
+
+
+
+{% block scripts %} {{ block.super }}
+
+{% comment %} <script src="{% get_static_prefix %}js/notifications.js"></script> {% endcomment %} 
+
+{% endblock scripts %}

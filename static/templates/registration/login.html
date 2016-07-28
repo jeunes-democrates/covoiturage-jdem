@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block content %}
+
+<form class="col-sm-8 col-md-6 col-lg-4" style="margin:auto; float: none;" action="" method="post" enctype="multipart/form-data">
+	<h1>Authentification</h1>
+	<hr>
+	{% csrf_token %}
+	{% bootstrap_form form %}
+	<input type="hidden" name="next" value="{{ next }}" />
+	<hr>
+	{% buttons %}
+		<button type="submit" class="btn btn-primary btn-block">
+			{% bootstrap_icon "ok" %} Se connecter
+		</button>
+	{% endbuttons %}
+		<p style="text-align: center; font-size: .8em;"><a href="{% url 'password_reset' %}">Mot de passe oublié ?</a></p>
+		<p style="text-align: center; font-size: .8em;">Pour obtenir un compte, appeler Antonin !</p>
+</form>
+
+{% endblock %}

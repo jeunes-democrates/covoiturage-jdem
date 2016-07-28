@@ -1,0 +1,46 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.2/css/font-awesome.min.css">
+	<link rel="shortcut icon" href="{% get_static_prefix %}images/favicon.ico" type="image/x-icon" />
+
+	<title>{% block title %}{% endblock title %}Covoiturage</title>
+
+	{% block head %}{% endblock head %}
+
+</head>
+
+<body style="background-color: #fafafa">
+
+<header>
+	{% block header %}{% endblock header %}
+</header>
+
+<div id="main-container" class="container main-container" >
+	{% block messages %}{% if messages %}<div class="col-sm-12">{% include "messages.html" %}</div>{% endif %}{% endblock messages %}
+	{% block content %}{% endblock content %}
+</div>
+
+<footer class="endpage">
+	{% block footer %}{% endblock footer %}
+</footer>	
+
+	
+{% block scripts %}
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+{% endblock scripts %}
+
+</body>
+
+</html>

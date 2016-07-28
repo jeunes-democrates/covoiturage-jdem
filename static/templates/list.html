@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}{{ block.super }}
+
+<div class="col-sm-12">
+
+{% if page_title %}<h1>{{ page_title }} ({{ object_list|length }}) :</h1>{% endif %}
+
+{% if user.is_staff and admin_url and object_list|length > 10 %}
+<p><a class="btn btn-default" href="{{ admin_url }}"><i class="fa fa-gears"></i> Administrer</a></p>
+{% endif %}
+
+<hr/>
+
+
+{% for object in object_list %}
+<div>
+
+	{% if url_by_id or url_by_slug %}
+
+	<a href="
+		{% if url_prefix %}{{ url_prefix }}{% endif %}
+		{% if url_by_id %}{{ object.pk }}{% endif %}
+		{% if url_by_slug and object.slug %}{{ object.slug }}{% endif %}
+		">
+
+	{% endif %}
+	
+		{% if object.title %}<h2>{{ object.title }}</h2>{% endif %}
+		
+		{% if object.name %}<h4>{{ object.name }}</h4>{% endif %}
+
+		{% if object.username %}<h4>{{ object.username }}</h4>{% endif %}
+
+		{% if object.prenom or object.nom %}<h4>{{ object.nom }} {{ object.prenom }}</h4>{% endif %}
+	
+	{% if url_by_id or url_by_slug %}</a>{% endif %}
+
+	{% if object.text %}<p>{{ object.text }}</p>{% endif %}
+
+	{% if object.created or object.created_by %}
+
+		<p style="font-size: .8em; color: #666">
+		{% if object.created and object.created_by %}
+			{{ object.created|date:"Y-m-d à H:i" }}, par {{ object.created_by }}
+		{% elif object.created %}
+			{{ object.created|date:"Y-m-d à H:i" }}
+		{% elif object.created_by %}
+			par {{ object.created_by }}
+		{% endif %}
+		</p>
+
+	{% endif %}
+
+</div>
+<hr/>
+{% endfor %}
+
+
+
+{% if not object_list %}
+
+<p>Cette liste est vide.</p>
+
+{% endif %}
+
+
+
+{% if user.is_staff and admin_url %}
+<p><a class="btn btn-default" href="{{ admin_url }}"><i class="fa fa-gears"></i> Administrer</a></p>
+{% endif %}
+
+</div> <!--columns-->
+
+{% endblock content %}
+
+
+
+{% block scripts %}{{ block.super }}
+
+{% endblock scripts %}
+
