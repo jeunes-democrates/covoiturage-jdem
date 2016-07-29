@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}{{ block.super }}
+
+<div class="col-sm-12">
+
+{% if page_title %}<h1>{{ page_title }} ({{ object_list|length }}) :</h1>{% endif %}
+
+<hr/>
+
+
+{% for object in object_list %}
+
+<div class="ride">
+
+	<h2>{{ object.owner.first_name }} {{ object.owner.last_name }}</h2>
+
+	{% if object.rider__count == object.seats %}
+		<p class="text--light">Complet</p>
+	{% else %}
+		<p>Places disponibles : {{ object.remaining_seats }} / {{ object.seats }}</p>
+	{% endif %}
+
+	<a class="btn btn-default" href="{% url 'ride_share_detail_of_ride' object.pk %}">Rejoindre</a>
+
+</div>
+
+<hr/>
+{% endfor %}
+
+
+
+{% if not object_list %}
+
+<p>Cette liste est vide.</p>
+
+{% endif %}
+
+</div> <!--columns-->
+
+{% endblock content %}
+
+
+
+{% block scripts %}{{ block.super }}
+
+{% endblock scripts %}
+

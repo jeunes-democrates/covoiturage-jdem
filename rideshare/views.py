@@ -1,5 +1,6 @@
 import random, ast
 from datetime import datetime, timedelta
+from django.db.models import Count, F
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
@@ -21,7 +22,6 @@ from .forms import *
 #	@method_decorator(login_required, name='dispatch')
 class ListOfEvents(ListView):
 	model = Event
-	template_name = 'list.html'
 
 	def get_context_data(self, **kwargs):
 		context = super(ListOfEvents, self).get_context_data(**kwargs)
@@ -32,8 +32,8 @@ class ListOfEvents(ListView):
 
 #	@method_decorator(login_required, name='dispatch')
 class ListOfRides(ListView):
-	model = Ride
-	template_name = 'list.html'
+	template_name = 'ride_list.html'
+	queryset = Ride.objects.annotate(remaining_seats=F('seats')-Count('rider'))
 
 	def get_context_data(self, **kwargs):
 		context = super(ListOfRides, self).get_context_data(**kwargs)
@@ -43,7 +43,7 @@ class ListOfRides(ListView):
 
 
 #	@method_decorator(login_required, name='dispatch')
-class DetailOfRide(ListView):
+class DetailOfRide(DetailView):
 	model = Ride
 	template_name = 'ride_detail.html'
 
