@@ -3,47 +3,105 @@
 
 {% block content %}{{ block.super }}
 
-<div class="col-sm-12">
+<div class="col-sm-12" style="margin-top: 1em">
 
-{% if page_title %}<h1>{{ page_title }} ({{ object_list|length }}) :</h1>{% endif %}
+<h1>{{ event.name }}</h1>
 
 <hr/>
 
+<div class="alert alert-info">
+	Le prix évolue en fonction du nombre de participants. <a href="#">Comment ?</a>
+</div>
 
 {% for object in object_list %}
 
-<div class="ride">
+<div class="ride card">
 
-	<h2>{{ object.owner.first_name }} {{ object.owner.last_name }}</h2>
+	<div class="card-header">
+		<span class="ride__remaining-seats">
+			{% if object.rider__count == object.seats %}
+			<span class="text-muted">Complet</span>
+			{% else %}
+			Places disponibles : <strong>{{ object.remaining_seats }}</strong> / {{ object.seats }}
+			{% endif %}
+		</span>
+		Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
+		{% if object.departure_date|date != object.arrival_date|date %}
+		, arrivée le <strong>{{ object.arrival_datetime|date:"l d F" }}, </strong>
+		{% endif %}
+		avec {{ object.owner.first_name }} {{ object.owner.last_name }}
+	</div>
 
-	{% if object.rider__count == object.seats %}
-		<p class="text--light">Complet</p>
-	{% else %}
-		<p>Places disponibles : {{ object.remaining_seats }} / {{ object.seats }}</p>
-	{% endif %}
-
-	<a class="btn btn-default" href="{% url 'ride_share_detail_of_ride' object.pk %}">Rejoindre</a>
+	<div class="card-block">
+		<div class="ride__stops">
+		{% for stop in object.stop_set.all %}
+			<div class="ride__stop">
+				<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i></span>
+				<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
+				<span class="ride__stop__location">{{ stop.location.name }}</span>
+			</div>
+		{% endfor %}
+		</div>
+		<div class="ride__interactions">
+			<div class="ride__price"
+				data-cost="{{ object.cost }}"
+				data-riders="{{ object.number_of_riders|add:1 }}" >
+				<i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+				<span class="sr-only">Calcul...</span>
+			</div>
+			<div class="ride__price-details text-muted">
+				Soit {{ object.cost }} € divisé par {{ object.number_of_riders|add:1 }} participants.
+			</div>
+			{% if object.rider__count >= object.seats %}
+			<a class="ride__join btn btn-secondary">Complet</a>
+			{% else %}
+			<a class="ride__join pull-right btn btn-primary" href="{% url 'request_to_join_ride' object.pk %}">Demander à rejoindre</a>
+			{% endif %}
+		</div>
+	</div>
 
 </div>
 
-<hr/>
 {% endfor %}
 
 
 
 {% if not object_list %}
-
-<p>Cette liste est vide.</p>
-
+<p>Il n'y a pas encore de trajets sur cet évènement.</p>
 {% endif %}
 
-</div> <!--columns-->
+</div>
+
+<style>
+
+.ride__remaining-seats { float: right; margin-left: 1em; }
+
+.ride__stops { display: table; float: left; }
+.ride__stop { display: table-row; }
+.ride__stop > span { display: table-cell; padding: 0 1em; }
+
+.ride__interactions { float: right; }
+.ride__price { font-size: 1.6em; text-align: right; }
+.ride__price-details { font-size: .8em; position: relative; top: -.4em; }
+
+
+</style>
 
 {% endblock content %}
 
 
 
-{% block scripts %}{{ block.super }}
+{% block scripts %} {{ block.super }}
+
+<script>
+
+var $ridePrice = $('.ride__price')
+	rideCost = parseFloat($ridePrice.attr('data-cost'))
+	riders = parseFloat($ridePrice.attr('data-riders'))
+	ridePrice = rideCost / riders
+
+$ridePrice.text(ridePrice.toFixed(2).toString().replace(".", ",") + ' €')
+
+</script>
 
 {% endblock scripts %}
-

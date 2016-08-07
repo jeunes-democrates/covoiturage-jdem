@@ -37,6 +37,11 @@ class Ride(models.Model):
 	owner = models.ForeignKey(User)
 	seats = models.SmallIntegerField(default=5)
 	return_ride = models.ForeignKey('self', null=True, blank=True)
+	fuel_cost = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
+	tolls_cost = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
+	car_wear_cost = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
+	other_costs = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
+	# cost is divided equally among users
 
 	def __str__(self):
 		return '{} {} — {} seats'.format(self.owner.first_name, self.owner.last_name, str(self.seats))
@@ -51,6 +56,8 @@ class Stop(models.Model):
 	def __str__(self):
 		return '{} — {} — {}'.format(self.ride, self.location.name, self.time)
 
+	class Meta:
+		ordering = ('time',)
 
 
 class Rider(models.Model):
