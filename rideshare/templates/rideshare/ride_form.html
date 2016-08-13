@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+
+
+{% block content %}{{ block.super }}
+
+<div class="
+	col-xl-6 offset-xl-3
+	col-lg-8 offset-lg-2
+	col-md-10 offset-md-1
+	col-sm-12
+	" style="margin-top: 2em">
+
+<div class="card">
+	<div class="card-header">
+		<h1 class="text-primary">Nouveau trajet</h1>
+		<h2 class="text-muted">{{ event.name }}</h2>
+	</div>
+	<div class="card-block">
+		<form id="create-new-ride" action="" method="post" data-stops="0">
+			{% csrf_token %}
+			<div class="form-group row">
+				<label for="id_return" class="col-xs-12 col-form-label">
+					Vous souhaitez proposer un :
+				</label>
+				<div class="col-xs-12">
+					<label class="custom-control custom-radio" for="id_return_1">
+						<input type="radio" class="custom-control-input" id="id_return_1" name="id_return_radios" checked/>
+						<span class="custom-control-indicator"></span>
+						<span class="custom-control-description">Aller retour</span>
+					</label>
+					<label class="custom-control custom-radio" for="id_return_2">
+						<input type="radio" class="custom-control-input" id="id_return_2" name="id_return_radios"/>
+						<span class="custom-control-indicator"></span>
+						<span class="custom-control-description">Aller retour</span>
+					</label>
+					<label class="custom-control custom-radio" for="id_return_3">
+						<input type="radio" class="custom-control-input" id="id_return_3" name="id_return_radios"/>
+						<span class="custom-control-indicator"></span>
+						<span class="custom-control-description">Aller retour</span>
+					</label>
+				</div>
+			</div>
+			<hr/>
+			<div class="form-group row">
+				<label for="id_seats" class="col-xs-8 col-form-label">
+					Quelle est la <strong>capacité totale</strong> du véhicule ?
+				</label>
+				<div class="col-xs-4">
+					<div class="input-group">
+						<input type="text" class="form-control" id="id_seats" placeholder="ex: 5" />
+						<div class="input-group-addon">💺</div>
+					</div>
+				</div>
+				<div class="col-xs-12">
+					<small class="form-text text-muted">
+						Vous pourrez indiquer la disponibilité des places dans l'étape suivante.
+					</small>
+				</div>
+			</div>
+			<div id="ride_stops_container">
+				<button id="add_stop" type="button" class="btn btn-secondary btn-block btn-sm">+ Ajouter un autre arrêt</button>
+			</div>
+			<hr/>
+			<div class="form-group row">
+				<label for="id_price" class="col-xs-8 col-form-label"><strong>Prix</strong> par participant</label>
+				<div class="col-xs-4">
+					<div class="input-group">
+						<input type="text" class="form-control" id="id_price" placeholder="ex: 30">
+						<!-- TODO : prefill with event location -->
+						<div class="input-group-addon">€</div>
+					</div>
+				</div>
+			</div>
+			<!-- TODO : verify phone number -->
+			<button type="submit" class="btn btn-primary btn-block">Créer</button>
+		</form>
+	</div>
+</form>
+
+</div>
+
+</div>
+
+<style>
+	
+.input-group-addon { min-width: 2.5em; }
+/* normalizes the icon boxes next to inputs */
+
+.geocode-selectors { position: relative; top: -1px; }
+.geocode-selector { line-height: 1.15; text-align: left; }
+
+
+</style>
+
+{% endblock content %}
+
+
+
+{% block scripts %} {{ block.super }}
+
+<script>
+	
+function requestGeocode(searchText, $inputField) {
+	if (!navigator.onLine) {
+		// Checks if user is connected to internet before sending request
+		createAlert('danger', $inputField.closest('.row'), "Vous n'êtes pas connecté à internet", 'no-internet', true)	
+	} else if (searchText) {
+		// Only runs the geocode query if user has actually inputted text
+		var geocode_api_key = "AIzaSyDSVS9hlR8hSy_Ddig3WaH55BJTJRFLXCw"
+			$geocodeSelectors = $inputField.closest('.form-group').find('.geocode-selectors')
+			searchText = encodeURI(searchText + ' France') // adding "France" for extra accuracy TODO remove :p
+			geocode_url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + searchText +
+				"&key=" + geocode_api_key +
+				"&language=fr&region=fr&bounds=51.09,9.56|41.34,-5.14"
+		$.ajax({url:geocode_url}).done(function(response){
+			console.log(response.results)
+			var html = ""
+			$.each(response.results, function(i, place) {
+				html +=
+					'<button type="button" class="geocode-selector btn btn-block btn-secondary btn-sm">' +
+						place.formatted_address +
+					'</button>'
+			})
+			// geometry > location > latitude/longitude
+			// geometry > location > location_type "APPROXIMATE"
+			$geocodeSelectors.html(html)
+			// TODO : suggest based on $('#id_return_3:checked')
+		})
+	}
+}
+
+function createAlert(level, $location, content, identifier, unique) {
+
+	if (level=='success' || level=='info' || level=='warning' || level=='danger') 
+		{ var level_is_ok = true } else { var level_is_ok = false }
+
+	if (level_is_ok) {
+		if (unique) $('[data-alert-identifier="' + identifier + '"]').remove() // Clears unique messages
+		var alertClasses = 'class="col-xs-12 alert alert-' + level + ' alert-dismissible fade in"'
+			alertIdentifier = 'data-alert-identifier="' + identifier + '"'
+		$location.prepend(
+		   '<div ' + alertClasses + ' ' + alertIdentifier + ' role="alert">\
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+					<span aria-hidden="true"><i class="fa fa-times"></i></span>\
+				</button>' +
+				content +
+		   '</div>'
+		)
+	} else {
+		console.error('An error message was created with the wrong level "' + level + '" with the createAlert function.')
+	}
+}
+
+function enableGeocodeLookup() {
+	$('input.geocode-seeker').keydown(disableSubmit)
+	$('input.geocode-seeker').keyup(disableSubmit, lookupGeocode)
+}	
+
+function disableSubmit(e) {
+	// prevent a wrong enter from sending the form
+	var keyCode = e.keyCode || e.which;
+	console.log('Pressed keycode ' + keyCode)
+	if (keyCode === 13) {
+		e.preventDefault();
+	}
+}
+
+function lookupGeocode(e) {
+	var $inputField = $(this)
+		searchText = $inputField.val()
+		window.$inputField = $inputField
+	delay(function(){
+		requestGeocode(searchText, $inputField)
+	}, 250 )
+}
+
+// When looking for places from the input field, we send ajax requests
+// This prevents us from sending too many requests, by waiting 500ms after each keyup
+var delay = (function(){
+	var timer = 0;
+	return function(callback, ms){
+		clearTimeout (timer);
+		timer = setTimeout(callback, ms);
+	};
+})();
+
+
+
+// Create the form blocks to manage origin and destination input
+$('#ride_stops_container').prepend(generateStopFormBlock('origin'))
+$('#ride_stops_container').append(generateStopFormBlock('destination'))
+enableGeocodeLookup()
+
+// Some rides have more than an origin and destination
+// The "add_stop" button allows users to set additional stops
+$('button#add_stop').click(function(){
+	$(this).before(generateStopFormBlock('stop'))
+	enableGeocodeLookup()
+})
+
+function generateStopFormBlock(id) {
+
+	var place_name = "Rennes, France"
+		place_latitude = "0.000000"
+		place_longitude = "0.000000"
+		place_label = "<strong>Arrêt</strong> à"
+		extra_stop = true
+		date = ""
+		time = ""
+
+	if ($('#id_origin_date').val()) date = $('#id_origin_date').val()
+	if ($('#id_origin_time').val()) time = $('#id_origin_time').val()
+
+	if (id=='origin') {
+		place_name = "Pau, France"
+		place_label = "<strong>Départ</strong> de"
+		extra_stop = false
+//		if 
+	} else if (id=='destination') {
+		place_name = "L'Elysée, France"
+		place_label = "<strong>Arrivée</strong> à"
+		extra_stop = false
+	} else if (id=='stop') {
+
+	}
+
+	return html = 
+	   '<hr/>\
+		<div class="form-group row">\
+			<label for="id_' + id + '_place" class="col-xs-4 col-form-label">' + place_label + '</label>\
+			<div class="col-xs-8">\
+				<div class="input-group">\
+					<input id="id_' + id + '_place" type="text" class="form-control geocode-seeker" \
+						value="' + "" + '" placeholder="ex: ' + place_name + '" autocomplete="off"/>\
+					<div class="input-group-addon"><i class="fa fa-map-marker"></i></div>\
+				</div>\
+				<div class="geocode-selectors"></div>\
+				<input id="id_' + id + '_place_name" value="' + place_name + '" />\
+				<input id="id_' + id + '_place_latitude" value="' + place_latitude + '" />\
+				<input id="id_' + id + '_place_longitude" value="' + place_longitude + '" />\
+			</div>\
+		</div>\
+		<div class="form-group row">\
+			<label for="id_' + id + '_date" class="col-xs-4 col-form-label">le</label>\
+			<div class="col-xs-8">\
+				<div class="input-group">\
+					<input id="id_' + id + '_date" type="date" class="form-control stop_date" value="' + date + '"/>\
+					<div class="input-group-addon"><i class="fa fa-calendar"></i></div>\
+				</div>\
+			</div>\
+		</div>\
+		<div class="form-group row">\
+			<label for="id_' + id + '_time" class="col-xs-4 col-form-label">à</label>\
+			<div class="col-xs-8">\
+				<div class="input-group">\
+					<input id="id_' + id + '_time" type="time" class="form-control stop_time" value="' + time + '"/>\
+					<div class="input-group-addon"><i class="fa fa-clock-o"></i></div>\
+				</div>\
+			</div>\
+		</div>'
+}
+
+$('#id_origin_date').change(function(){
+	$originDate = $(this).val()
+	$('.stop_date').each(function(){
+		if ($(this).val()=="") $(this).val($originDate)
+	})
+})
+
+$('#id_origin_time').change(function(){
+	$originTime = $(this).val()
+	$('.stop_time').each(function(){
+		if ($(this).val()=="") $(this).val($originTime)
+	})
+})
+
+//	$('form#create-new-ride')
+
+
+/*
+
+switch (new Date().getDay()) {
+    case 0:
+        day = "OK";
+        break;
+    case 1:
+        day = "ZERO_RESULTS";
+        break;
+    case 2:
+        day = "OVER_QUERY_LIMIT";
+        break;
+    case 3:
+        day = "REQUEST_DENIED";
+        break;
+    case 4:
+        day = "INVALID_REQUEST";
+        break;
+    case 5:
+        day = "UNKNOWN_ERROR";
+}
+
+TODO : manage all these cases
+"OK" indicates that no errors occurred; the address was successfully parsed and at least one geocode was returned.
+"ZERO_RESULTS" indicates that the geocode was successful but returned no results. This may occur if the geocoder was passed a non-existent address.
+"OVER_QUERY_LIMIT" indicates that you are over your quota.
+"REQUEST_DENIED" indicates that your request was denied.
+"INVALID_REQUEST" generally indicates that the query (address, components or latlng) is missing.
+"UNKNOWN_ERROR" indicates that the request could not be processed due to a server error. The request may succeed if you try again.
+
+*/
+</script>
+
+{% endblock scripts %}

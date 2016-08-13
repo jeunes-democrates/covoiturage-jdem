@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os
+import os, datetime
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 from django.db import models
@@ -25,7 +25,8 @@ class Event(models.Model):
 	slug = models.SlugField(max_length=48, unique=True)
 	description = models.CharField(max_length=5000)
 	location = models.ForeignKey(Location)
-	end_date = models.DateTimeField()
+	start_date = models.DateTimeField(default=datetime.now)
+	end_date = models.DateTimeField(default=datetime.now)
 
 	def __str__(self):
 		return self.name
@@ -37,10 +38,7 @@ class Ride(models.Model):
 	owner = models.ForeignKey(User)
 	seats = models.SmallIntegerField(default=5)
 	return_ride = models.ForeignKey('self', null=True, blank=True)
-	fuel_cost = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
-	tolls_cost = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
-	car_wear_cost = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
-	other_costs = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
+	price = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
 	# cost is divided equally among users
 
 	def __str__(self):

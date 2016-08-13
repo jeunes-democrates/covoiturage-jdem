@@ -5,13 +5,12 @@
 
 <div class="col-sm-12" style="margin-top: 1em">
 
-<h1>{{ event.name }}</h1>
+<a class="pull-right btn btn-secondary" href="{% url 'create_new_ride' event.slug %}">
+	<i class="fa fa-plus"></i> Proposer un nouveau trajet
+	</a>
+<h1 class="page-title">{{ event.name }}</h1>
 
-<hr/>
-
-<div class="alert alert-info">
-	Le prix évolue en fonction du nombre de participants. <a href="#">Comment ?</a>
-</div>
+<hr class="clearfix" />
 
 {% for object in object_list %}
 
@@ -36,29 +35,24 @@
 		<div class="ride__stops">
 		{% for stop in object.stop_set.all %}
 			<div class="ride__stop">
-				<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i></span>
+				<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i> </span>
 				<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
 				<span class="ride__stop__location">{{ stop.location.name }}</span>
 			</div>
 		{% endfor %}
 		</div>
 		<div class="ride__interactions">
-			<div class="ride__price"
-				data-cost="{{ object.cost }}"
-				data-riders="{{ object.number_of_riders|add:1 }}" >
-				<i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
-				<span class="sr-only">Calcul...</span>
-			</div>
-			<div class="ride__price-details text-muted">
-				Soit {{ object.cost }} € divisé par {{ object.number_of_riders|add:1 }} participants.
-			</div>
+			<div class="ride__price">{{ object.price }} €</div>
 			{% if object.rider__count >= object.seats %}
-			<a class="ride__join btn btn-secondary">Complet</a>
+			<span class="ride__join btn btn-secondary">Complet</span>
 			{% else %}
-			<a class="ride__join pull-right btn btn-primary" href="{% url 'request_to_join_ride' object.pk %}">Demander à rejoindre</a>
+			<a class="ride__join btn btn-primary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
+				<i class="fa fa-sign-in"></i> Demander à rejoindre
+			</a>
 			{% endif %}
 		</div>
 	</div>
+
 
 </div>
 
@@ -74,6 +68,8 @@
 
 <style>
 
+.page-title { display: inline; }
+
 .ride__remaining-seats { float: right; margin-left: 1em; }
 
 .ride__stops { display: table; float: left; }
@@ -81,9 +77,7 @@
 .ride__stop > span { display: table-cell; padding: 0 1em; }
 
 .ride__interactions { float: right; }
-.ride__price { font-size: 1.6em; text-align: right; }
-.ride__price-details { font-size: .8em; position: relative; top: -.4em; }
-
+.ride__price { font-size: 1.6em; text-align: right; margin-bottom: .25em; }
 
 </style>
 
@@ -95,12 +89,29 @@
 
 <script>
 
-var $ridePrice = $('.ride__price')
-	rideCost = parseFloat($ridePrice.attr('data-cost'))
-	riders = parseFloat($ridePrice.attr('data-riders'))
-	ridePrice = rideCost / riders
+function $call(url) {
+	$.ajax({url: url})
+}
 
-$ridePrice.text(ridePrice.toFixed(2).toString().replace(".", ",") + ' €')
+function displayLoadingState($element) {
+	$element.html('<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Chargement...')
+}
+
+$('.ride__join').click(function(){
+	var $this = $(this)
+		request_join_url = $this.attr('data-url')
+	displayLoadingState($this)
+	$.ajax({url: request_join_url}).done(function(result) {
+		if (result.requestSuccessful) {
+			$this.addClass('btn-success')
+			$this.html("<i class='fa fa-check'></i> C'est tout bon !")
+		} else {
+			$this.addClass('btn-error')
+			$this.html("<i class='fa fa-check'></i> Ça n'a pas marché :(")
+
+		}
+	})
+})
 
 </script>
 

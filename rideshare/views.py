@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, render, render_to_response, redi
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView
+from django.views.generic.edit import CreateView
 
 from .models import *
 from .forms import *
@@ -40,7 +41,6 @@ class ListOfRides(ListView):
 		remaining_seats=F('seats')-Count('rider'),
 		departure_datetime=Min('stop__time'),
 		arrival_datetime=Max('stop__time'),
-		cost=F('fuel_cost')+F('tolls_cost')+F('car_wear_cost')+F('other_costs'),
 		)
 
 	def get_context_data(self, **kwargs):
@@ -51,3 +51,14 @@ class ListOfRides(ListView):
 
 def requestToJoinRide(request, pk):
 	return JsonResponse({'requestSuccessful': 1})
+
+
+class CreateNewRide(CreateView):
+	model = Ride
+	fields = ['seats', 'price']
+
+	def get_context_data(self, **kwargs):
+		context = super(CreateNewRide, self).get_context_data(**kwargs)
+		context['event'] = Event.objects.get(slug=self.kwargs['slug']) 
+		context['page_title'] = "Nouveau trajet : {}".format(context['event'].name)
+		return context
