@@ -49,7 +49,7 @@
 				</label>
 				<div class="col-xs-4">
 					<div class="input-group">
-						<input type="text" class="form-control" id="id_seats" placeholder="ex: 5" />
+						<input type="text" class="form-control" id="id_seats" placeholder="ex: 5" required/>
 						<div class="input-group-addon">💺</div>
 					</div>
 				</div>
@@ -60,20 +60,25 @@
 				</div>
 			</div>
 			<div id="ride_stops_container">
-				<button id="add_stop" type="button" class="btn btn-secondary btn-block btn-sm">+ Ajouter un autre arrêt</button>
+				<button id="remove_stop" type="button" class="btn btn-warning btn-block btn-sm" style="display: none;">
+					<i class="fa fa-times"></i> Supprimer cet arrêt
+				</button>
+				<button id="add_stop" type="button" class="btn btn-info btn-block btn-sm">
+					<i class="fa fa-plus"></i> Ajouter un autre arrêt
+				</button>
 			</div>
 			<hr/>
 			<div class="form-group row">
 				<label for="id_price" class="col-xs-8 col-form-label"><strong>Prix</strong> par participant</label>
 				<div class="col-xs-4">
 					<div class="input-group">
-						<input type="text" class="form-control" id="id_price" placeholder="ex: 30">
-						<!-- TODO : prefill with event location -->
+						<input type="text" class="form-control" id="id_price" placeholder="ex: 30" required>
 						<div class="input-group-addon">€</div>
 					</div>
 				</div>
 			</div>
 			<!-- TODO : verify phone number -->
+			<input id="stop-counter" type="hidden" value="0"/>
 			<button type="submit" class="btn btn-primary btn-block">Créer</button>
 		</form>
 	</div>
@@ -88,8 +93,8 @@
 .input-group-addon { min-width: 2.5em; }
 /* normalizes the icon boxes next to inputs */
 
-.geocode-selectors { position: relative; top: -1px; }
-.geocode-selector { line-height: 1.15; text-align: left; }
+.geocode-selectors {  }
+.geocode-selector { line-height: 1.15; text-align: left; margin-top: .15em !important; }
 
 
 </style>
@@ -101,16 +106,44 @@
 {% block scripts %} {{ block.super }}
 
 <script>
-	
+
+window.rideshareStore = {
+	'stops': 0,
+}
+
+function fieldValidationFeedback($inputField, validationStatus, feedbackText) {
+	$inputField.removeClass('form-group-success form-group-warning form-group-error')
+	$formGroup = $inputField.closest('.form-group')
+	$formGroup.removeClass('has-success has-warning has-error')
+
+	if (validationStatus == "success" || validationStatus == "warning" || validationStatus == "error" ) {
+		$inputField.addClass('form-group-' + validationStatus)
+		$formGroup.addClass('has-' + validationStatus)
+	} else if (validationStatus == "clear") {
+		// do nothing
+	} else {
+		console.error('The fieldValidationFeedback function was passed a wrong validation status : "' + validationStatus + '"')
+	}
+}
+
+$('form').on('submit', function(e){
+	e.preventDefault()
+	$requiredFields = $('input[required]')
+	console.log("Required fields : " + $requiredFields)
+})
+
 function requestGeocode(searchText, $inputField) {
+	$stopWrapper = $inputField.closest('.stop-wrapper')
+	geocodeIcon('default', $stopWrapper)
 	if (!navigator.onLine) {
 		// Checks if user is connected to internet before sending request
-		createAlert('danger', $inputField.closest('.row'), "Vous n'êtes pas connecté à internet", 'no-internet', true)	
+		createAlert('danger', $stopWrapper, "Vous n'êtes pas connecté à internet", 'geocode-fail', true)	
 	} else if (searchText) {
 		// Only runs the geocode query if user has actually inputted text
+		geocodeIcon('spin', $stopWrapper)
 		var geocode_api_key = "AIzaSyDSVS9hlR8hSy_Ddig3WaH55BJTJRFLXCw"
 			$geocodeSelectors = $inputField.closest('.form-group').find('.geocode-selectors')
-			searchText = encodeURI(searchText + ' France') // adding "France" for extra accuracy TODO remove :p
+			searchText = encodeURI(searchText + ', France')
 			geocode_url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + searchText +
 				"&key=" + geocode_api_key +
 				"&language=fr&region=fr&bounds=51.09,9.56|41.34,-5.14"
@@ -118,16 +151,52 @@ function requestGeocode(searchText, $inputField) {
 			console.log(response.results)
 			var html = ""
 			$.each(response.results, function(i, place) {
-				html +=
-					'<button type="button" class="geocode-selector btn btn-block btn-secondary btn-sm">' +
-						place.formatted_address +
-					'</button>'
+				if (place.formatted_address !== "France" ) {
+					html +=
+						'<button \
+							type="button" \
+							class="geocode-selector btn btn-block btn-secondary btn-sm" \
+							data-latitude="' + place.geometry.location.lat + '" \
+							data-longitude="' + place.geometry.location.lng + '" \
+							data-precision="' + place.geometry.location_type + '" \
+							data-name="' + place.formatted_address + '">' +
+							place.formatted_address +
+						'</button>'
+				}
 			})
-			// geometry > location > latitude/longitude
-			// geometry > location > location_type "APPROXIMATE"
 			$geocodeSelectors.html(html)
+			enableGeocodeSelectors()
+			geocodeIcon('default', $stopWrapper)
 			// TODO : suggest based on $('#id_return_3:checked')
+		}).fail(function(response){
+			createAlert('danger', $stopWrapper, "Une erreur est survenue. Êtes-vous bien connecté à internet ?", 'geocode-fail', true)
+			geocodeIcon('default', $stopWrapper)
 		})
+	}
+}
+
+function enableGeocodeSelectors() {
+	$('.geocode-selector').click(function(){
+		$geocodeSelector = $(this)
+		$stopWrapper = $geocodeSelector.closest('.stop-wrapper') 
+		$inputField = $stopWrapper.find('.geocode-seeker')
+		$inputField.val($geocodeSelector.data("name"))
+		$stopWrapper.find('.hidden-stop-name').val($geocodeSelector.data("name"))
+		$stopWrapper.find('.hidden-stop-latitude').val($geocodeSelector.data("latitude"))
+		$stopWrapper.find('.hidden-stop-longitude').val($geocodeSelector.data("longitude"))
+		$stopWrapper.find('.hidden-stop-precision').val($geocodeSelector.data("precision"))
+		fieldValidationFeedback($inputField, "success")
+		$('.geocode-selectors').empty()
+	})
+}
+
+function geocodeIcon(command, $stopWrapper) {
+	if (command == "default") {
+		$stopWrapper.find('.stop-icon').removeClass('fa-refresh fa-spin').addClass('fa-map-marker')
+	} else if (command == "spin") {
+		$stopWrapper.find('.stop-icon').removeClass('fa-map-marker').addClass('fa-refresh fa-spin')
+	} else {
+		console.error('geocodeIcon received a bad command, should be "spin" or "default"')
 	}
 }
 
@@ -160,20 +229,23 @@ function enableGeocodeLookup() {
 
 function disableSubmit(e) {
 	// prevent a wrong enter from sending the form
-	var keyCode = e.keyCode || e.which;
-	console.log('Pressed keycode ' + keyCode)
-	if (keyCode === 13) {
+	var keyCode = e.keyCode || e.which
+	if (keyCode === 13) { // key code for "enter"
 		e.preventDefault();
 	}
 }
 
 function lookupGeocode(e) {
-	var $inputField = $(this)
-		searchText = $inputField.val()
-		window.$inputField = $inputField
-	delay(function(){
-		requestGeocode(searchText, $inputField)
-	}, 250 )
+	var keyCode = e.keyCode || e.which
+	if (keyCode !== 9) { // don't seek if the key was a tab
+		var $inputField = $(this)
+			searchText = $inputField.val()
+			window.$inputField = $inputField
+		fieldValidationFeedback($inputField, "clear")
+		delay(function(){
+			requestGeocode(searchText, $inputField)
+		}, 250 )
+	}
 }
 
 // When looking for places from the input field, we send ajax requests
@@ -196,8 +268,17 @@ enableGeocodeLookup()
 // Some rides have more than an origin and destination
 // The "add_stop" button allows users to set additional stops
 $('button#add_stop').click(function(){
-	$(this).before(generateStopFormBlock('stop'))
+	$('#remove_stop').before(generateStopFormBlock('stop'))
 	enableGeocodeLookup()
+	$('#remove_stop').show()
+})
+
+$('button#remove_stop').click(function(){
+	var wrapper = $('#wrapper_stop' + rideshareStore.stops).remove()
+	rideshareStore.stops -= 1
+	if (rideshareStore.stops == 0) {
+		$('#remove_stop').hide()
+	}
 })
 
 function generateStopFormBlock(id) {
@@ -205,10 +286,12 @@ function generateStopFormBlock(id) {
 	var place_name = "Rennes, France"
 		place_latitude = "0.000000"
 		place_longitude = "0.000000"
+		place_precision = "NO_PLACE;"
 		place_label = "<strong>Arrêt</strong> à"
-		extra_stop = true
 		date = ""
 		time = ""
+
+	// TODO : default dates
 
 	if ($('#id_origin_date').val()) date = $('#id_origin_date').val()
 	if ($('#id_origin_time').val()) time = $('#id_origin_time').val()
@@ -216,37 +299,42 @@ function generateStopFormBlock(id) {
 	if (id=='origin') {
 		place_name = "Pau, France"
 		place_label = "<strong>Départ</strong> de"
-		extra_stop = false
-//		if 
 	} else if (id=='destination') {
 		place_name = "L'Elysée, France"
 		place_label = "<strong>Arrivée</strong> à"
-		extra_stop = false
 	} else if (id=='stop') {
-
+		rideshareStore.stops += 1
+		id = id + rideshareStore.stops // "stop1"
+		$('#stop-counter').val(rideshareStore.stops) // sends number of stops with form
 	}
 
 	return html = 
-	   '<hr/>\
+	   '<div id="wrapper_' + id + '" class="stop-wrapper"><hr/>\
 		<div class="form-group row">\
 			<label for="id_' + id + '_place" class="col-xs-4 col-form-label">' + place_label + '</label>\
 			<div class="col-xs-8">\
 				<div class="input-group">\
-					<input id="id_' + id + '_place" type="text" class="form-control geocode-seeker" \
+					<input id="id_' + id + '_place" type="text" class="form-control geocode-seeker" required \
 						value="' + "" + '" placeholder="ex: ' + place_name + '" autocomplete="off"/>\
-					<div class="input-group-addon"><i class="fa fa-map-marker"></i></div>\
+					<div class="input-group-addon"><i class="stop-icon fa fa-map-marker"></i></div>\
 				</div>\
 				<div class="geocode-selectors"></div>\
-				<input id="id_' + id + '_place_name" value="' + place_name + '" />\
-				<input id="id_' + id + '_place_latitude" value="' + place_latitude + '" />\
-				<input id="id_' + id + '_place_longitude" value="' + place_longitude + '" />\
+				<input type="hidden" id="id_' + id + '_place_name" class="hidden-stop-name" value="' + place_name + '" />\
+				<input type="hidden" id="id_' + id + '_place_latitude" class="hidden-stop-latitude" value="' + place_latitude + '" />\
+				<input type="hidden" id="id_' + id + '_place_longitude" class="hidden-stop-longitude" value="' + place_longitude + '" />\
+				<input type="hidden" id="id_' + id + '_place_precision" class="hidden-stop-precision" value="' + place_precision + '" />\
+				<div class="col-xs-12">\
+					<small class="form-text text-muted">\
+						Indiquez une adresse précise !\
+					</small>\
+				</div>\
 			</div>\
 		</div>\
 		<div class="form-group row">\
 			<label for="id_' + id + '_date" class="col-xs-4 col-form-label">le</label>\
 			<div class="col-xs-8">\
 				<div class="input-group">\
-					<input id="id_' + id + '_date" type="date" class="form-control stop_date" value="' + date + '"/>\
+					<input id="id_' + id + '_date" type="date" class="form-control stop_date" value="' + date + '" required/>\
 					<div class="input-group-addon"><i class="fa fa-calendar"></i></div>\
 				</div>\
 			</div>\
@@ -255,10 +343,11 @@ function generateStopFormBlock(id) {
 			<label for="id_' + id + '_time" class="col-xs-4 col-form-label">à</label>\
 			<div class="col-xs-8">\
 				<div class="input-group">\
-					<input id="id_' + id + '_time" type="time" class="form-control stop_time" value="' + time + '"/>\
+					<input id="id_' + id + '_time" type="time" class="form-control stop_time" value="' + time + '" required/>\
 					<div class="input-group-addon"><i class="fa fa-clock-o"></i></div>\
 				</div>\
 			</div>\
+		</div>\
 		</div>'
 }
 
