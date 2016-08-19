@@ -62,3 +62,8 @@ class CreateNewRide(CreateView):
 		context['event'] = Event.objects.get(slug=self.kwargs['slug']) 
 		context['page_title'] = "Nouveau trajet : {}".format(context['event'].name)
 		return context
+
+	def post(self, request, *args, **kwargs):
+		print(request.POST)
+		print(request.POST.get('price'))
+		return HttpResponse(request.POST)
