@@ -11,8 +11,10 @@ from datetime import datetime, timedelta
 
 class Location(models.Model):
 	name = models.CharField(max_length=48)
+	region = models.CharField(max_length=255, default="Île-de-France") # "Île-de-France"
 	latitude = models.DecimalField(max_digits=8, decimal_places=6)
 	longitude = models.DecimalField(max_digits=8, decimal_places=6)
+	precision = models.CharField(max_length=48) # based on google maps api precision
 
 	def __str__(self):
 		#Format as :  Guidel (23.029923, 83,282193)

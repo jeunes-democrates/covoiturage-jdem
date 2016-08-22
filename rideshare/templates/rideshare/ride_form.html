@@ -26,19 +26,19 @@
 				</label>
 				<div class="col-xs-12">
 					<label class="custom-control custom-radio" for="id_return_1">
-						<input type="radio" class="custom-control-input" id="id_return_1" name="id_return_radios" checked/>
+						<input type="radio" value="go-and-return" class="custom-control-input" id="id_return_1" name="ride_type" checked/>
 						<span class="custom-control-indicator"></span>
 						<span class="custom-control-description">Aller retour</span>
 					</label>
 					<label class="custom-control custom-radio" for="id_return_2">
-						<input type="radio" class="custom-control-input" id="id_return_2" name="id_return_radios"/>
+						<input type="radio" value="just-go" class="custom-control-input" id="id_return_2" name="ride_type"/>
 						<span class="custom-control-indicator"></span>
-						<span class="custom-control-description">Aller retour</span>
+						<span class="custom-control-description">Aller simple</span>
 					</label>
 					<label class="custom-control custom-radio" for="id_return_3">
-						<input type="radio" class="custom-control-input" id="id_return_3" name="id_return_radios"/>
+						<input type="radio" value="just-return" class="custom-control-input" id="id_return_3" name="ride_type"/>
 						<span class="custom-control-indicator"></span>
-						<span class="custom-control-description">Aller retour</span>
+						<span class="custom-control-description">Retour simple</span>
 					</label>
 				</div>
 			</div>
@@ -50,7 +50,7 @@
 				<div class="col-xs-4">
 					<div class="input-group">
 						<input type="text" class="form-control" id="id_seats" name="seats" placeholder="ex: 5" required/>
-						<div class="input-group-addon">💺</div>
+						<label for="id_seats" class="input-group-addon">💺</label>
 					</div>
 				</div>
 				<div class="col-xs-12">
@@ -63,22 +63,23 @@
 				<button id="remove_stop" type="button" class="btn btn-warning btn-block btn-sm" style="display: none;">
 					<i class="fa fa-times"></i> Supprimer cet arrêt
 				</button>
-				<button id="add_stop" type="button" class="btn btn-info btn-block btn-sm">
+<!--				<button id="add_stop" type="button" class="btn btn-info btn-block btn-sm">
 					<i class="fa fa-plus"></i> Ajouter un autre arrêt
-				</button>
-			</div>
+				</button> TODO : enable
+-->			</div>
 			<hr/>
 			<div class="form-group row">
 				<label for="id_price" class="col-xs-8 col-form-label"><strong>Prix</strong> par participant</label>
 				<div class="col-xs-4">
 					<div class="input-group">
 						<input type="text" class="form-control" id="id_price" name="price" placeholder="ex: 30" required>
-						<div class="input-group-addon">€</div>
+						<label for="id_price" class="input-group-addon">€</label>
 					</div>
 				</div>
 			</div>
 			<!-- TODO : verify phone number -->
-			<input id="stop-counter" type="hidden" value="0"/>
+			<input id="stop-counter" name="number_of_stops" type="hidden" value="0"/>
+			<input name="event_id" type="hidden" value="{{ event.pk }}"/>
 			<button type="submit" class="btn btn-primary btn-block">Créer</button>
 		</form>
 	</div>
@@ -162,6 +163,7 @@ function requestGeocode(searchText, $inputField) {
 							data-latitude="' + place.geometry.location.lat + '" \
 							data-longitude="' + place.geometry.location.lng + '" \
 							data-precision="' + place.geometry.location_type + '" \
+							data-region="' + place.address_components[2].long_name + '" \
 							data-name="' + place.formatted_address + '">' +
 							place.formatted_address +
 						'</button>'
@@ -188,6 +190,7 @@ function enableGeocodeSelectors() {
 		$stopWrapper.find('.hidden-stop-latitude').val($geocodeSelector.data("latitude"))
 		$stopWrapper.find('.hidden-stop-longitude').val($geocodeSelector.data("longitude"))
 		$stopWrapper.find('.hidden-stop-precision').val($geocodeSelector.data("precision"))
+		$stopWrapper.find('.hidden-stop-region').val($geocodeSelector.data("region"))
 		fieldValidationFeedback($inputField, "success")
 		$('.geocode-selectors').empty()
 	})
@@ -226,8 +229,10 @@ function createAlert(level, $location, content, identifier, unique) {
 }
 
 function enableGeocodeLookup() {
-	$('input.geocode-seeker').keydown(disableSubmit)
-	$('input.geocode-seeker').keyup(disableSubmit, lookupGeocode)
+	var $geocodeSeeker = $('input.geocode-seeker')
+	$geocodeSeeker.keydown(disableSubmit)
+	$geocodeSeeker.keyup(disableSubmit, lookupGeocode)
+	$geocodeSeeker.change(fieldValidationFeedback($geocodeSeeker, "clear"))
 }	
 
 function disableSubmit(e) {
@@ -289,12 +294,13 @@ function generateStopFormBlock(id) {
 	var place_name = "Rennes, France"
 		place_latitude = "0.000000"
 		place_longitude = "0.000000"
-		place_precision = "NO_PLACE;"
+		place_precision = "NO_PLACE"
+		place_region = "NO_REGION"
 		place_label = "<strong>Arrêt</strong> à"
 		date = today()
 		time = "11:00:00"
 
-	// TODO : default dates
+	// TODO : default dates, default place, ...
 
 	if ($('#id_origin_date').val()) date = $('#id_origin_date').val()
 	if ($('#id_origin_time').val()) time = $('#id_origin_time').val()
@@ -319,7 +325,7 @@ function generateStopFormBlock(id) {
 				<div class="input-group">\
 					<input id="id_' + id + '_place" name="' + id + '_place" type="text" class="form-control geocode-seeker" required \
 						value="' + "" + '" placeholder="ex: ' + place_name + '" autocomplete="off"/>\
-					<div class="input-group-addon"><i class="stop-icon fa fa-map-marker"></i></div>\
+					<label for="id_' + id + '_place" class="input-group-addon"><i class="stop-icon fa fa-map-marker"></i></label>\
 				</div>\
 				<div class="geocode-selectors"></div>\
 				<input type="hidden" id="id_' + id + '_place_name" name="' + id + '_place_name" \
@@ -330,6 +336,8 @@ function generateStopFormBlock(id) {
 					class="hidden-stop-longitude" value="' + place_longitude + '" />\
 				<input type="hidden" id="id_' + id + '_place_precision" name="' + id + '_place_precision" \
 					class="hidden-stop-precision" value="' + place_precision + '" />\
+				<input type="hidden" id="id_' + id + '_place_region" name="' + id + '_place_region" \
+					class="hidden-stop-region" value="' + place_region + '" />\
 				<div class="col-xs-12">\
 					<small class="form-text text-muted">\
 						Indiquez une adresse précise !\
@@ -343,7 +351,7 @@ function generateStopFormBlock(id) {
 				<div class="input-group">\
 					<input id="id_' + id + '_date" name="' + id + '_date" type="date" class="form-control stop_date" \
 						 value="' + date + '" placeholder="' + date + '" required/>\
-					<div class="input-group-addon"><i class="fa fa-calendar"></i></div>\
+					<label for="id_' + id + '_date" class="input-group-addon"><i class="fa fa-calendar"></i></label>\
 				</div>\
 			</div>\
 		</div>\
@@ -353,7 +361,7 @@ function generateStopFormBlock(id) {
 				<div class="input-group">\
 					<input id="id_' + id + '_time" name="' + id + '_time" type="time" class="form-control stop_time" \
 						value="' + time + '" placeholder="' + time + '" required/>\
-					<div class="input-group-addon"><i class="fa fa-clock-o"></i></div>\
+					<label for="id_' + id + '_time" class="input-group-addon"><i class="fa fa-clock-o"></i></label>\
 				</div>\
 			</div>\
 		</div>\
