@@ -1,8 +1,9 @@
 import random, ast
 from datetime import datetime, timedelta
-from django.db.models import F, ExpressionWrapper, Count, Min, Max, DecimalField
+from django.db.models import Q, F, ExpressionWrapper, Count, Min, Max, DecimalField
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -34,28 +35,54 @@ class ListOfEvents(ListView):
 
 
 #	@method_decorator(login_required, name='dispatch')
-class ListOfRides(ListView):
+class EventRides(ListView):
 	template_name = 'rideshare/ride_list.html'
 	queryset = Ride.objects.filter(stop__isnull=False).annotate(
 		number_of_riders=Count('rider'),
 		remaining_seats=F('seats')-Count('rider'),
 		departure_datetime=Min('stop__time'),
 		arrival_datetime=Max('stop__time'),
+		number_of_owned_rides=Max('stop__time'),
 		)
 
 	def get_context_data(self, **kwargs):
-		context = super(ListOfRides, self).get_context_data(**kwargs)
+		context = super(EventRides, self).get_context_data(**kwargs)
 		context['event'] = Event.objects.get(slug=self.kwargs['slug']) 
 		context['page_title'] = context['event'].name
+		context['login_url'] = settings.LOGIN_URL
+		if self.request.user.is_authenticated() :
+			context['owned_rides'] = Ride.objects.filter(event=context['event'], owner=self.request.user, stop__isnull=False).annotate(
+				number_of_riders=Count('rider'),
+				remaining_seats=F('seats')-Count('rider'),
+				departure_datetime=Min('stop__time'),
+				arrival_datetime=Max('stop__time'),
+				number_of_owned_rides=Max('stop__time'),
+			)
+			context['joined_rides'] = Ride.objects.filter(event=context['event'], rider__user=self.request.user, stop__isnull=False, rider__status='CONFIRMED').annotate(
+				number_of_riders=Count('rider'),
+				remaining_seats=F('seats')-Count('rider'),
+				departure_datetime=Min('stop__time'),
+				arrival_datetime=Max('stop__time'),
+				number_of_owned_rides=Max('stop__time'),
+			)
+			context['active_requests'] = Ride.objects.filter(event=context['event'], rider__user=self.request.user, stop__isnull=False, rider__status='PENDING').annotate(
+				number_of_riders=Count('rider'),
+				remaining_seats=F('seats')-Count('rider'),
+				departure_datetime=Min('stop__time'),
+				arrival_datetime=Max('stop__time'),
+				number_of_owned_rides=Max('stop__time'),
+			)
 		return context
 
 def requestToJoinRide(request, pk):
 	return JsonResponse({'requestSuccessful': 1})
 
 
-class CreateNewRide(CreateView):
+class CreateNewRide(LoginRequiredMixin, CreateView):
 	model = Ride
 	fields = ['seats', 'price']
+	login_url = settings.LOGIN_URL
+	redirect_field_name = 'redirect_to'
 
 	def get_context_data(self, **kwargs):
 		context = super(CreateNewRide, self).get_context_data(**kwargs)
@@ -101,10 +128,12 @@ class CreateNewRide(CreateView):
 				latitude = form.get(stop_label + '_place_latitude'),
 				longitude = form.get(stop_label + '_place_longitude'),
 				precision = form.get(stop_label + '_place_precision'),
+				region = form.get(stop_label + '_place_region'),
+				locality = form.get(stop_label + '_place_locality'),
 				)
 
 			time = (form.get(stop_label + '_date') + ' ' + form.get(stop_label + '_time')) # 22/08/2016 11:00:00
-			time = datetime.strptime(time, '%d/%m/%Y %H:%M:%S' )
+			time = datetime.strptime(time, '%d/%m/%Y %H:%M' )
 
 			new_stop = Stop(
 				ride = ride,
@@ -114,7 +143,7 @@ class CreateNewRide(CreateView):
 
 			new_stop.save()
 
-		return HttpResponse(new_stop)
+		return redirect('rideshare_list_of_rides_for_event', slug=event.slug)
 
 
 

@@ -11,7 +11,8 @@ from datetime import datetime, timedelta
 
 class Location(models.Model):
 	name = models.CharField(max_length=48)
-	region = models.CharField(max_length=255, default="Île-de-France") # "Île-de-France"
+	region = models.CharField(max_length=255, default="Île-de-France") # "Île-de-France", "Bretagne"
+	locality = models.CharField(max_length=255, default="Paris") # "Paris", "Guidel"
 	latitude = models.DecimalField(max_digits=8, decimal_places=6)
 	longitude = models.DecimalField(max_digits=8, decimal_places=6)
 	precision = models.CharField(max_length=48) # based on google maps api precision
@@ -39,7 +40,8 @@ class Ride(models.Model):
 	event = models.ForeignKey(Event)
 	owner = models.ForeignKey(User)
 	seats = models.SmallIntegerField(default=5)
-	return_ride = models.ForeignKey('self', null=True, blank=True)
+#	return_ride = models.ForeignKey('self', null=True, blank=True)
+	is_return = models.BooleanField(default=False)
 	price = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
 	# cost is divided equally among users
 

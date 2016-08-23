@@ -25,20 +25,20 @@
 					Vous souhaitez proposer un :
 				</label>
 				<div class="col-xs-12">
-					<label class="custom-control custom-radio" for="id_return_1">
-						<input type="radio" value="go-and-return" class="custom-control-input" id="id_return_1" name="ride_type" checked/>
+<!--					<label class="custom-control custom-radio" for="id_return_1">
+						<input type="radio" value="go-and-return" class="custom-control-input" id="id_return_1" name="ride_type" required checked/>
 						<span class="custom-control-indicator"></span>
 						<span class="custom-control-description">Aller retour</span>
 					</label>
-					<label class="custom-control custom-radio" for="id_return_2">
-						<input type="radio" value="just-go" class="custom-control-input" id="id_return_2" name="ride_type"/>
+-->					<label class="custom-control custom-radio" for="id_return_2">
+						<input type="radio" value="just-go" class="custom-control-input" id="id_return_2" name="ride_type" required/>
 						<span class="custom-control-indicator"></span>
-						<span class="custom-control-description">Aller simple</span>
+						<span class="custom-control-description">Aller</span>
 					</label>
 					<label class="custom-control custom-radio" for="id_return_3">
-						<input type="radio" value="just-return" class="custom-control-input" id="id_return_3" name="ride_type"/>
+						<input type="radio" value="just-return" class="custom-control-input" id="id_return_3" name="ride_type" required/>
 						<span class="custom-control-indicator"></span>
-						<span class="custom-control-description">Retour simple</span>
+						<span class="custom-control-description">Retour</span>
 					</label>
 				</div>
 			</div>
@@ -152,10 +152,11 @@ function requestGeocode(searchText, $inputField) {
 				"&key=" + geocode_api_key +
 				"&language=fr&region=fr&bounds=51.09,9.56|41.34,-5.14"
 		$.ajax({url:geocode_url}).done(function(response){
-			console.log(response.results)
 			var html = ""
 			$.each(response.results, function(i, place) {
 				if (place.formatted_address !== "France" ) {
+					var region = get_address_component_by_type(place.address_components, 'administrative_area_level_1')
+						locality = get_address_component_by_type(place.address_components, 'locality') 
 					html +=
 						'<button \
 							type="button" \
@@ -163,7 +164,8 @@ function requestGeocode(searchText, $inputField) {
 							data-latitude="' + place.geometry.location.lat + '" \
 							data-longitude="' + place.geometry.location.lng + '" \
 							data-precision="' + place.geometry.location_type + '" \
-							data-region="' + place.address_components[2].long_name + '" \
+							data-region="' + region + '" \
+							data-locality="' + locality + '" \
 							data-name="' + place.formatted_address + '">' +
 							place.formatted_address +
 						'</button>'
@@ -180,6 +182,19 @@ function requestGeocode(searchText, $inputField) {
 	}
 }
 
+function get_address_component_by_type(address_components, type) {
+	// "locality", "administrative_area_level_1", ...
+	var result = ""
+	if (address_components) {
+		$.each(address_components, function(i, address_component){
+			if (address_component.types.indexOf(type) > -1) {
+				result = address_component.long_name
+			}
+		})		
+	}
+	return result
+}
+
 function enableGeocodeSelectors() {
 	$('.geocode-selector').click(function(){
 		$geocodeSelector = $(this)
@@ -191,6 +206,7 @@ function enableGeocodeSelectors() {
 		$stopWrapper.find('.hidden-stop-longitude').val($geocodeSelector.data("longitude"))
 		$stopWrapper.find('.hidden-stop-precision').val($geocodeSelector.data("precision"))
 		$stopWrapper.find('.hidden-stop-region').val($geocodeSelector.data("region"))
+		$stopWrapper.find('.hidden-stop-locality').val($geocodeSelector.data("locality"))
 		fieldValidationFeedback($inputField, "success")
 		$('.geocode-selectors').empty()
 	})
@@ -296,9 +312,10 @@ function generateStopFormBlock(id) {
 		place_longitude = "0.000000"
 		place_precision = "NO_PLACE"
 		place_region = "NO_REGION"
+		place_locality = "NO_LOCALITY"
 		place_label = "<strong>Arrêt</strong> à"
-		date = today()
-		time = "11:00:00"
+		date = datify(new Date())
+		time = "11:00"
 
 	// TODO : default dates, default place, ...
 
@@ -306,11 +323,13 @@ function generateStopFormBlock(id) {
 	if ($('#id_origin_time').val()) time = $('#id_origin_time').val()
 
 	if (id=='origin') {
-		place_name = "Pau, France"
+		place_name = "Lyon, France"
 		place_label = "<strong>Départ</strong> de"
+		date = datify(new Date(2017,9,23))
 	} else if (id=='destination') {
-		place_name = "L'Elysée, France"
+		place_name = "Guidel-Plages"
 		place_label = "<strong>Arrivée</strong> à"
+		date = datify(new Date(2017,9,23))
 	} else if (id=='stop') {
 		rideshareStore.stops += 1
 		id = id + rideshareStore.stops // "stop1"
@@ -328,17 +347,18 @@ function generateStopFormBlock(id) {
 					<label for="id_' + id + '_place" class="input-group-addon"><i class="stop-icon fa fa-map-marker"></i></label>\
 				</div>\
 				<div class="geocode-selectors"></div>\
-				<input type="hidden" id="id_' + id + '_place_name" name="' + id + '_place_name" \
+				<input type="text" id="id_' + id + '_place_name" name="' + id + '_place_name" \
 					class="hidden-stop-name" value="' + place_name + '" />\
-				<input type="hidden" id="id_' + id + '_place_latitude" name="' + id + '_place_latitude" \
+				<input type="text" id="id_' + id + '_place_latitude" name="' + id + '_place_latitude" \
 					class="hidden-stop-latitude" value="' + place_latitude + '" />\
-				<input type="hidden" id="id_' + id + '_place_longitude" name="' + id + '_place_longitude" \
+				<input type="text" id="id_' + id + '_place_longitude" name="' + id + '_place_longitude" \
 					class="hidden-stop-longitude" value="' + place_longitude + '" />\
-				<input type="hidden" id="id_' + id + '_place_precision" name="' + id + '_place_precision" \
+				<input type="text" id="id_' + id + '_place_precision" name="' + id + '_place_precision" \
 					class="hidden-stop-precision" value="' + place_precision + '" />\
-				<input type="hidden" id="id_' + id + '_place_region" name="' + id + '_place_region" \
+				<input type="text" id="id_' + id + '_place_region" name="' + id + '_place_region" \
 					class="hidden-stop-region" value="' + place_region + '" />\
-				<div class="col-xs-12">\
+				<input type="text" id="id_' + id + '_place_locality" name="' + id + '_place_locality" \
+					class="hidden-stop-locality" value="' + place_locality + '" />\				<div class="col-xs-12">\
 					<small class="form-text text-muted">\
 						Indiquez une adresse précise !\
 					</small>\
@@ -349,7 +369,7 @@ function generateStopFormBlock(id) {
 			<label for="id_' + id + '_date" class="col-xs-4 col-form-label">le</label>\
 			<div class="col-xs-8">\
 				<div class="input-group">\
-					<input id="id_' + id + '_date" name="' + id + '_date" type="date" class="form-control stop_date" \
+					<input id="id_' + id + '_date" name="' + id + '_date" class="form-control stop_date" \
 						 value="' + date + '" placeholder="' + date + '" required/>\
 					<label for="id_' + id + '_date" class="input-group-addon"><i class="fa fa-calendar"></i></label>\
 				</div>\
@@ -359,8 +379,8 @@ function generateStopFormBlock(id) {
 			<label for="id_' + id + '_time" class="col-xs-4 col-form-label">à</label>\
 			<div class="col-xs-8">\
 				<div class="input-group">\
-					<input id="id_' + id + '_time" name="' + id + '_time" type="time" class="form-control stop_time" \
-						value="' + time + '" placeholder="' + time + '" required/>\
+					<input id="id_' + id + '_time" name="' + id + '_time" type="text" class="form-control stop_time" \
+						value="' + time + '" placeholder="' + time + '" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" required/>\
 					<label for="id_' + id + '_time" class="input-group-addon"><i class="fa fa-clock-o"></i></label>\
 				</div>\
 			</div>\
@@ -382,6 +402,33 @@ $('#id_origin_time').change(function(){
 	})
 })
 
+$('#id_return_2').click(function(){
+	fillWithEventDetails('start', 'destination')
+})
+$('#id_return_3').click(function(){
+	fillWithEventDetails('end', 'origin')
+})
+
+function fillWithEventDetails(when, where) {
+	$('#id_' + where + '_place').val('{{ event.location.name }}')
+	$('#id_' + where + '_place_name').val('{{ event.location.name }}')
+	$('#id_' + where + '_place_latitude').val({{ event.location.latitude }})
+	$('#id_' + where + '_place_longitude').val({{ event.location.longitude }})
+	$('#id_' + where + '_place_precision').val('{{ event.location.precision }}')
+	$('#id_' + where + '_place_region').val('{{ event.location.region }}')
+	$('#id_' + where + '_place_locality').val('{{ event.location.locality }}')
+	if (when=='start') {
+		var time = '{{ event.start_date|time:"H:i" }}'
+			date = '{{ event.start_date|date:"d/m/Y" }}'
+	} else if (when=='end') {
+		var time = '{{ event.end_date|time:"H:i" }}'
+			date = '{{ event.end_date|date:"d/m/Y" }}'
+	}
+	$('#id_' + where + '_time').val(time)
+	$('.stop_date').val(date)
+	fieldValidationFeedback($('.geocode-seeker'), "clear")
+	fieldValidationFeedback($('#id_' + where + '_place'), "success")
+}
 
 // TODO : on click, get google geocode results again
 
@@ -419,16 +466,18 @@ TODO : manage all these cases
 "UNKNOWN_ERROR" indicates that the request could not be processed due to a server error. The request may succeed if you try again.
 
 */
-function today() {
-	var ymd = new Date().toJSON().slice(0,10).split('-')
+
+function datify(date) {
+	var ymd = date.toJSON().slice(0,10).split('-')
 		y = ymd[0]
 		m = ymd[1]
 		d = ymd[2]
 	return( d + '/' + m + '/' + y ) // Ex : 21/03/2016
 }
-	$(function() {
-		$('input[type="date"').datepicker({language: 'fr'})
-	})
+
+$(function() {
+	$('.stop_date').datepicker({language: 'fr'})
+})
 
 </script>
 

@@ -5,60 +5,248 @@
 
 <div class="col-sm-12" style="margin-top: 1em">
 
-<a class="pull-right btn btn-secondary" href="{% url 'create_new_ride' event.slug %}">
-	<i class="fa fa-plus"></i> Proposer un nouveau trajet
+{% if not user.is_authenticated %}
+ <a class="pull-right btn btn-primary" style="margin-left: .5em;" href="{{ login_url }}">
+	<i class="fa fa-power-off"></i> Connexion
 	</a>
+{% endif %}
+
+ <a class="pull-right btn btn-secondary" style="margin-left: .5em;" href="{% url 'create_new_ride' event.slug %}">
+	<i class="fa fa-plus"></i> Proposer un nouveau trajet
+	</a> 
+
+ <a class="pull-right btn btn-secondary" href="mailto:evenements@jeunes-democrates.org?subject=Problème sur le site de coivoiturage">
+	<i class="fa fa-question"></i> Aide<!-- TODO : make it better help -->
+	</a>
+
+
 <h1 class="page-title">{{ event.name }}</h1>
+
+{% if owned_rides or joined_rides or active_requests %}
+	<hr class="clearfix" />
+	<a id="all_rides_filter" class="btn btn-secondary ride-filter active">Tous</a>
+{% endif %}
+
+{% if owned_rides %}
+	<a id="owned_rides_filter" class="btn btn-secondary ride-filter">Mes offres de trajets</a>
+{% endif %}
+
+{% if joined_rides %}
+	<a id="joined_rides_filter" class="btn btn-secondary ride-filter">Les trajets auxquels je suis inscrit</a>
+{% endif %}
+
+{% if active_requests %}
+	<a id="active_requests_filter" class="btn btn-secondary ride-filter">Trajets en cours de souscription</a>
+{% endif %}
+
+<div id="region-filters"><hr class="clearfix" /></div>
+<div id="return-filters"><hr class="clearfix" />
+	<a id="return-all" class="btn btn-secondary return-filter active">Tous</a>
+	<a id="return-go" class="btn btn-secondary return-filter">Allers</a>
+	<a id="return-return" class="btn btn-secondary return-filter">Retours</a>
+</div>
 
 <hr class="clearfix" />
 
-{% for object in object_list %}
+<div id="all_rides_container" class="ride-container">
 
-<div class="ride card">
-
-	<div class="card-header">
-		<span class="ride__remaining-seats">
-			{% if object.rider__count == object.seats %}
-			<span class="text-muted">Complet</span>
-			{% else %}
-			Places disponibles : <strong>{{ object.remaining_seats }}</strong> / {{ object.seats }}
+	{% for object in object_list %}
+	
+	<div class="ride card" data-region="{{ object.stop_set.all.0.location.region }}" data-return="{{ object.is_return }}">
+	
+		<div class="card-header">
+			<span class="ride__remaining-seats">
+				{% if object.rider__count == object.seats %}
+				<span class="text-muted">Complet</span>
+				{% else %}
+				Places disponibles : <strong>{{ object.remaining_seats }}</strong> / {{ object.seats }}
+				{% endif %}
+			</span>
+			Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
+			{% if object.departure_date|date != object.arrival_date|date %}
+			, arrivée le <strong>{{ object.arrival_datetime|date:"l d F" }}, </strong>
 			{% endif %}
-		</span>
-		Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
-		{% if object.departure_date|date != object.arrival_date|date %}
-		, arrivée le <strong>{{ object.arrival_datetime|date:"l d F" }}, </strong>
-		{% endif %}
-		avec {{ object.owner.first_name }} {{ object.owner.last_name }}
-	</div>
-
-	<div class="card-block">
-		<div class="ride__stops">
-		{% for stop in object.stop_set.all %}
-			<div class="ride__stop">
-				<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i> </span>
-				<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
-				<span class="ride__stop__location">{{ stop.location.name }}</span>
+			avec {{ object.owner.first_name }} {{ object.owner.last_name }}
+		</div>
+	
+		<div class="card-block">
+			<div class="ride__stops">
+			{% for stop in object.stop_set.all %}
+				<div class="ride__stop">
+					<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i> </span>
+					<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
+					<span class="ride__stop__location">{{ stop.location.locality }}</span>
+				</div>
+			{% endfor %}
 			</div>
-		{% endfor %}
+			<div class="ride__interactions">
+				<div class="ride__price">{{ object.price }} €</div>
+				{% if object.rider__count >= object.seats %}
+				<span class="ride__join btn btn-secondary">Complet</span>
+				{% else %}
+				<a class="ride__join btn btn-secondary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
+					<i class="fa fa-sign-in"></i> Demander à rejoindre
+				</a>
+				{% endif %}
+			</div>
 		</div>
-		<div class="ride__interactions">
-			<div class="ride__price">{{ object.price }} €</div>
-			{% if object.rider__count >= object.seats %}
-			<span class="ride__join btn btn-secondary">Complet</span>
-			{% else %}
-			<a class="ride__join btn btn-primary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
-				<i class="fa fa-sign-in"></i> Demander à rejoindre
-			</a>
-			{% endif %}
-		</div>
+	
+	
 	</div>
-
-
-</div>
 
 {% endfor %}
 
+</div>
 
+<div id="owned_rides_container" class="ride-container" style="display: none;">
+
+	{% for object in owned_rides %}
+	
+	<div class="ride card">
+	
+		<div class="card-header">
+			<span class="ride__remaining-seats">
+				{% if object.rider__count == object.seats %}
+				<span class="text-muted">Complet</span>
+				{% else %}
+				Places disponibles : <strong>{{ object.remaining_seats }}</strong> / {{ object.seats }}
+				{% endif %}
+			</span>
+			Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
+			{% if object.departure_date|date != object.arrival_date|date %}
+			, arrivée le <strong>{{ object.arrival_datetime|date:"l d F" }}, </strong>
+			{% endif %}
+			avec {{ object.owner.first_name }} {{ object.owner.last_name }}
+		</div>
+	
+		<div class="card-block">
+			<div class="ride__stops">
+			{% for stop in object.stop_set.all %}
+				<div class="ride__stop">
+					<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i> </span>
+					<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
+					<span class="ride__stop__location">{{ stop.location.name }}</span>
+				</div>
+			{% endfor %}
+			</div>
+			<div class="ride__interactions">
+				<div class="ride__price">{{ object.price }} €</div>
+				{% if object.rider__count >= object.seats %}
+				<span class="ride__join btn btn-secondary">Complet</span>
+				{% else %}
+				<a class="ride__join btn btn-primary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
+					<i class="fa fa-sign-in"></i> Demander à rejoindre
+				</a>
+				{% endif %}
+			</div>
+		</div>
+	
+	
+	</div>
+
+{% endfor %}
+
+</div>
+
+<div id="joined_rides_container" class="ride-container" style="display: none;">
+
+	{% for object in joined_rides %}
+	
+	<div class="ride card">
+	
+		<div class="card-header">
+			<span class="ride__remaining-seats">
+				{% if object.rider__count == object.seats %}
+				<span class="text-muted">Complet</span>
+				{% else %}
+				Places disponibles : <strong>{{ object.remaining_seats }}</strong> / {{ object.seats }}
+				{% endif %}
+			</span>
+			Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
+			{% if object.departure_date|date != object.arrival_date|date %}
+			, arrivée le <strong>{{ object.arrival_datetime|date:"l d F" }}, </strong>
+			{% endif %}
+			avec {{ object.owner.first_name }} {{ object.owner.last_name }}
+		</div>
+	
+		<div class="card-block">
+			<div class="ride__stops">
+			{% for stop in object.stop_set.all %}
+				<div class="ride__stop">
+					<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i> </span>
+					<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
+					<span class="ride__stop__location">{{ stop.location.name }}</span>
+				</div>
+			{% endfor %}
+			</div>
+			<div class="ride__interactions">
+				<div class="ride__price">{{ object.price }} €</div>
+				{% if object.rider__count >= object.seats %}
+				<span class="ride__join btn btn-secondary">Complet</span>
+				{% else %}
+				<a class="ride__join btn btn-primary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
+					<i class="fa fa-sign-in"></i> Demander à rejoindre
+				</a>
+				{% endif %}
+			</div>
+		</div>
+	
+	
+	</div>
+
+{% endfor %}
+
+</div>
+
+<div id="active_requests_container" class="ride-container" style="display: none;">
+
+	{% for object in active_requests %}
+	
+	<div class="ride card">
+	
+		<div class="card-header">
+			<span class="ride__remaining-seats">
+				{% if object.rider__count == object.seats %}
+				<span class="text-muted">Complet</span>
+				{% else %}
+				Places disponibles : <strong>{{ object.remaining_seats }}</strong> / {{ object.seats }}
+				{% endif %}
+			</span>
+			Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
+			{% if object.departure_date|date != object.arrival_date|date %}
+			, arrivée le <strong>{{ object.arrival_datetime|date:"l d F" }}, </strong>
+			{% endif %}
+			avec {{ object.owner.first_name }} {{ object.owner.last_name }}
+		</div>
+	
+		<div class="card-block">
+			<div class="ride__stops">
+			{% for stop in object.stop_set.all %}
+				<div class="ride__stop">
+					<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i> </span>
+					<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
+					<span class="ride__stop__location">{{ stop.location.name }}</span>
+				</div>
+			{% endfor %}
+			</div>
+			<div class="ride__interactions">
+				<div class="ride__price">{{ object.price }} €</div>
+				{% if object.rider__count >= object.seats %}
+				<span class="ride__join btn btn-secondary">Complet</span>
+				{% else %}
+				<a class="ride__join btn btn-primary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
+					<i class="fa fa-sign-in"></i> Demander à rejoindre
+				</a>
+				{% endif %}
+			</div>
+		</div>
+	
+	
+	</div>
+
+{% endfor %}
+
+</div>
 
 {% if not object_list %}
 <p>Il n'y a pas encore de trajets sur cet évènement.</p>
@@ -79,6 +267,9 @@
 .ride__interactions { float: right; }
 .ride__price { font-size: 1.6em; text-align: right; margin-bottom: .25em; }
 
+.ride-container.return-go [data-return="False"] { display: none; }
+.ride-container.return-return [data-return="True"] { display: none; }
+
 </style>
 
 {% endblock content %}
@@ -89,28 +280,83 @@
 
 <script>
 
-function $call(url) {
-	$.ajax({url: url})
-}
+$( document ).ready(function() {
 
-function displayLoadingState($element) {
-	$element.html('<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Chargement...')
-}
-
-$('.ride__join').click(function(){
-	var $this = $(this)
-		request_join_url = $this.attr('data-url')
-	displayLoadingState($this)
-	$.ajax({url: request_join_url}).done(function(result) {
-		if (result.requestSuccessful) {
-			$this.addClass('btn-success')
-			$this.html("<i class='fa fa-check'></i> C'est tout bon !")
+	function $call(url) {
+		$.ajax({url: url})
+	}
+	
+	function displayLoadingState($element) {
+		$element.html('<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Chargement...')
+	}
+	
+	$('.ride__join').click(function(){
+		var $this = $(this)
+			request_join_url = $this.attr('data-url')
+		displayLoadingState($this)
+		$.ajax({url: request_join_url}).done(function(result) {
+			if (result.requestSuccessful) {
+				$this.addClass('btn-success')
+				$this.html("<i class='fa fa-check'></i> C'est tout bon !")
+			} else {
+				$this.addClass('btn-error')
+				$this.html("<i class='fa fa-check'></i> Ça n'a pas marché :(")
+	
+			}
+		})
+	})
+	
+	$('.ride-filter').click(function(){
+		$('.ride-filter').removeClass('active')
+		$(this).addClass('active')
+		$('.ride-container').hide()
+		var containerName = $(this).attr('id').replace('_filter', '_container')
+		$('#' + containerName).show()
+	})
+	
+	
+	
+	window.rideshareStore = {
+		'regions': [],
+	}
+	
+	$('#all_rides_container .ride').each(function(){
+		rideshareStore.regions.push($(this).data('region'))
+	})
+	
+	
+	if (rideshareStore.regions) {
+		rideshareStore.regions = $.uniqueSort(rideshareStore.regions).sort()
+		$('#region-filters').append(
+			'<button id="all-regions" data-region="all" class="btn btn-secondary active region-filter">Toute la France</button> '
+		)
+		$.each($.uniqueSort(rideshareStore.regions), function(i, region) {
+			$('#region-filters').append(
+				'<button data-region="' + region + '" class="btn btn-secondary region-filter">' + region + '</button> '
+			)
+		})
+	}
+	
+	$('.region-filter').click(function(){
+		var region = $(this).data('region')
+		$('.region-filter').removeClass('active')
+		$(this).addClass('active')
+		$('.ride').hide()
+		if (region=="all") {
+			$('.ride').show()
 		} else {
-			$this.addClass('btn-error')
-			$this.html("<i class='fa fa-check'></i> Ça n'a pas marché :(")
-
+			console.log('filtering for region ' + region)
+			$('.ride[data-region="' + region + '"').show()
 		}
 	})
+
+	$('.return-filter').click(function(){
+		$('.return-filter').removeClass('active')
+		$(this).addClass('active')
+		$('.ride-container').removeClass('return-all return-go return-return')
+		$('.ride-container').addClass($(this).attr('id'))
+	})
+
 })
 
 </script>
