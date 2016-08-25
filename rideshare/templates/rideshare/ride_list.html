@@ -52,8 +52,15 @@
 
 	{% for object in object_list %}
 	
-	<div class="ride card" data-region="{{ object.stop_set.all.0.location.region }}" data-return="{{ object.is_return }}">
-	
+	<div class="ride card"
+		data-user-is-owner={% if object.owner == user %}"true"{% else %}"false"{% endif %}
+		data-user-is-participant={% if user in object.riders.all %}"true"{% else %}"false"{% endif %}
+		data-region="{{ object.stop_set.all.0.location.region }}"
+		data-return="{{ object.is_return }}"
+		data-status="{% for rider in object.rider_set.all %}{% if rider.user == user %}{{ rider.status }}{% endif %}{% endfor %}"
+		>	
+
+
 		<div class="card-header">
 			<span class="ride__remaining-seats">
 				{% if object.rider__count == object.seats %}
@@ -82,165 +89,13 @@
 			<div class="ride__interactions">
 				<div class="ride__price">{{ object.price }} €</div>
 				{% if object.rider__count >= object.seats %}
-				<span class="ride__join btn btn-secondary">Complet</span>
+				<span class="ride__join btn btn-secondary btn-disabled">Complet</span>
 				{% else %}
 				<a class="ride__join btn btn-secondary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
-					<i class="fa fa-sign-in"></i> Demander à rejoindre
+				{% endif %}
 				</a>
-				{% endif %}
 			</div>
 		</div>
-	
-	
-	</div>
-
-{% endfor %}
-
-</div>
-
-<div id="owned_rides_container" class="ride-container" style="display: none;">
-
-	{% for object in owned_rides %}
-	
-	<div class="ride card">
-	
-		<div class="card-header">
-			<span class="ride__remaining-seats">
-				{% if object.rider__count == object.seats %}
-				<span class="text-muted">Complet</span>
-				{% else %}
-				Places disponibles : <strong>{{ object.remaining_seats }}</strong> / {{ object.seats }}
-				{% endif %}
-			</span>
-			Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
-			{% if object.departure_date|date != object.arrival_date|date %}
-			, arrivée le <strong>{{ object.arrival_datetime|date:"l d F" }}, </strong>
-			{% endif %}
-			avec {{ object.owner.first_name }} {{ object.owner.last_name }}
-		</div>
-	
-		<div class="card-block">
-			<div class="ride__stops">
-			{% for stop in object.stop_set.all %}
-				<div class="ride__stop">
-					<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i> </span>
-					<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
-					<span class="ride__stop__location">{{ stop.location.name }}</span>
-				</div>
-			{% endfor %}
-			</div>
-			<div class="ride__interactions">
-				<div class="ride__price">{{ object.price }} €</div>
-				{% if object.rider__count >= object.seats %}
-				<span class="ride__join btn btn-secondary">Complet</span>
-				{% else %}
-				<a class="ride__join btn btn-primary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
-					<i class="fa fa-sign-in"></i> Demander à rejoindre
-				</a>
-				{% endif %}
-			</div>
-		</div>
-	
-	
-	</div>
-
-{% endfor %}
-
-</div>
-
-<div id="joined_rides_container" class="ride-container" style="display: none;">
-
-	{% for object in joined_rides %}
-	
-	<div class="ride card">
-	
-		<div class="card-header">
-			<span class="ride__remaining-seats">
-				{% if object.rider__count == object.seats %}
-				<span class="text-muted">Complet</span>
-				{% else %}
-				Places disponibles : <strong>{{ object.remaining_seats }}</strong> / {{ object.seats }}
-				{% endif %}
-			</span>
-			Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
-			{% if object.departure_date|date != object.arrival_date|date %}
-			, arrivée le <strong>{{ object.arrival_datetime|date:"l d F" }}, </strong>
-			{% endif %}
-			avec {{ object.owner.first_name }} {{ object.owner.last_name }}
-		</div>
-	
-		<div class="card-block">
-			<div class="ride__stops">
-			{% for stop in object.stop_set.all %}
-				<div class="ride__stop">
-					<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i> </span>
-					<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
-					<span class="ride__stop__location">{{ stop.location.name }}</span>
-				</div>
-			{% endfor %}
-			</div>
-			<div class="ride__interactions">
-				<div class="ride__price">{{ object.price }} €</div>
-				{% if object.rider__count >= object.seats %}
-				<span class="ride__join btn btn-secondary">Complet</span>
-				{% else %}
-				<a class="ride__join btn btn-primary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
-					<i class="fa fa-sign-in"></i> Demander à rejoindre
-				</a>
-				{% endif %}
-			</div>
-		</div>
-	
-	
-	</div>
-
-{% endfor %}
-
-</div>
-
-<div id="active_requests_container" class="ride-container" style="display: none;">
-
-	{% for object in active_requests %}
-	
-	<div class="ride card">
-	
-		<div class="card-header">
-			<span class="ride__remaining-seats">
-				{% if object.rider__count == object.seats %}
-				<span class="text-muted">Complet</span>
-				{% else %}
-				Places disponibles : <strong>{{ object.remaining_seats }}</strong> / {{ object.seats }}
-				{% endif %}
-			</span>
-			Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
-			{% if object.departure_date|date != object.arrival_date|date %}
-			, arrivée le <strong>{{ object.arrival_datetime|date:"l d F" }}, </strong>
-			{% endif %}
-			avec {{ object.owner.first_name }} {{ object.owner.last_name }}
-		</div>
-	
-		<div class="card-block">
-			<div class="ride__stops">
-			{% for stop in object.stop_set.all %}
-				<div class="ride__stop">
-					<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i> </span>
-					<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
-					<span class="ride__stop__location">{{ stop.location.name }}</span>
-				</div>
-			{% endfor %}
-			</div>
-			<div class="ride__interactions">
-				<div class="ride__price">{{ object.price }} €</div>
-				{% if object.rider__count >= object.seats %}
-				<span class="ride__join btn btn-secondary">Complet</span>
-				{% else %}
-				<a class="ride__join btn btn-primary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
-					<i class="fa fa-sign-in"></i> Demander à rejoindre
-				</a>
-				{% endif %}
-			</div>
-		</div>
-	
 	
 	</div>
 
@@ -270,6 +125,8 @@
 .ride-container.return-go [data-return="False"] { display: none; }
 .ride-container.return-return [data-return="True"] { display: none; }
 
+.ride__join { margin-left: 1em; }
+
 </style>
 
 {% endblock content %}
@@ -295,6 +152,7 @@ $( document ).ready(function() {
 			request_join_url = $this.attr('data-url')
 		displayLoadingState($this)
 		$.ajax({url: request_join_url}).done(function(result) {
+			$this.removeClass('btn-success btn-error')
 			if (result.requestSuccessful) {
 				$this.addClass('btn-success')
 				$this.html("<i class='fa fa-check'></i> C'est tout bon !")
@@ -355,6 +213,19 @@ $( document ).ready(function() {
 		$(this).addClass('active')
 		$('.ride-container').removeClass('return-all return-go return-return')
 		$('.ride-container').addClass($(this).attr('id'))
+	})
+
+	$('.ride__join').each(function(){
+		var $button = $(this)
+			$ride = $button.closest('.ride')
+		if ($ride.data('status') == 'CONFIRMED') {
+			$button.html('<i class="fa fa-times"></i> Annuler')
+			$button.before('<span class="text-success">Vous avez une place à bord de ce trajet.</span>')
+		} else {
+			$button.html('<i class="fa fa-sign-in"></i> Demander à rejoindre')
+		}
+
+
 	})
 
 })

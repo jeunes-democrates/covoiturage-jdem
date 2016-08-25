@@ -1,6 +1,6 @@
 import random, ast
 from datetime import datetime, timedelta
-from django.db.models import Q, F, ExpressionWrapper, Count, Min, Max, DecimalField
+from django.db.models import *
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -42,7 +42,7 @@ class EventRides(ListView):
 		remaining_seats=F('seats')-Count('rider'),
 		departure_datetime=Min('stop__time'),
 		arrival_datetime=Max('stop__time'),
-		number_of_owned_rides=Max('stop__time'),
+		number_of_owned_rides=Max('stop__time')
 		)
 
 	def get_context_data(self, **kwargs):
@@ -50,28 +50,6 @@ class EventRides(ListView):
 		context['event'] = Event.objects.get(slug=self.kwargs['slug']) 
 		context['page_title'] = context['event'].name
 		context['login_url'] = settings.LOGIN_URL
-		if self.request.user.is_authenticated() :
-			context['owned_rides'] = Ride.objects.filter(event=context['event'], owner=self.request.user, stop__isnull=False).annotate(
-				number_of_riders=Count('rider'),
-				remaining_seats=F('seats')-Count('rider'),
-				departure_datetime=Min('stop__time'),
-				arrival_datetime=Max('stop__time'),
-				number_of_owned_rides=Max('stop__time'),
-			)
-			context['joined_rides'] = Ride.objects.filter(event=context['event'], rider__user=self.request.user, stop__isnull=False, rider__status='CONFIRMED').annotate(
-				number_of_riders=Count('rider'),
-				remaining_seats=F('seats')-Count('rider'),
-				departure_datetime=Min('stop__time'),
-				arrival_datetime=Max('stop__time'),
-				number_of_owned_rides=Max('stop__time'),
-			)
-			context['active_requests'] = Ride.objects.filter(event=context['event'], rider__user=self.request.user, stop__isnull=False, rider__status='PENDING').annotate(
-				number_of_riders=Count('rider'),
-				remaining_seats=F('seats')-Count('rider'),
-				departure_datetime=Min('stop__time'),
-				arrival_datetime=Max('stop__time'),
-				number_of_owned_rides=Max('stop__time'),
-			)
 		return context
 
 def requestToJoinRide(request, pk):

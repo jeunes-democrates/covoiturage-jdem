@@ -38,7 +38,8 @@ class Event(models.Model):
 
 class Ride(models.Model):
 	event = models.ForeignKey(Event)
-	owner = models.ForeignKey(User)
+	owner = models.ForeignKey(User, related_name="owned_ride")
+	riders = models.ManyToManyField(User, through="Rider", related_name="ride")
 	seats = models.SmallIntegerField(default=5)
 #	return_ride = models.ForeignKey('self', null=True, blank=True)
 	is_return = models.BooleanField(default=False)
@@ -63,8 +64,8 @@ class Stop(models.Model):
 
 
 class Rider(models.Model):
-	ride = models.ForeignKey(Ride)
-	user = models.ForeignKey(User, null=True, blank=True)
+	ride = models.ForeignKey(Ride, on_delete=models.CASCADE)
+	user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
 	status = models.CharField(max_length=32, choices=(
 		('PENDING', 'demande de participation au trajet en attente de confirmation'),
 		('CONFIRMED', 'demande de participation au trajet validée'),
@@ -76,11 +77,12 @@ class Rider(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 
 	def __str__(self):
-		return '{}, from {} to {}, riding with {}'.format(
+		return '{}, from {} to {}, riding with {}, status: {}'.format(
 			self.user.username,
 			self.joining_stop.location.name,
 			self.leaving_stop.location.name,
-			self.ride
+			self.ride,
+			self.status
 			)
 
 	def confirm(self):
