@@ -41,9 +41,9 @@
 
 <div id="region-filters"><hr class="clearfix" /></div>
 <div id="return-filters"><hr class="clearfix" />
-	<a id="return-all" class="btn btn-secondary return-filter active">Tous</a>
-	<a id="return-go" class="btn btn-secondary return-filter">Allers</a>
-	<a id="return-return" class="btn btn-secondary return-filter">Retours</a>
+	<button data-filter-return="" class="btn btn-secondary return-filter active">Tous</button>
+	<button data-filter-return="aller" class="btn btn-secondary return-filter">Allers</button>
+	<button data-filter-return="retour" class="btn btn-secondary return-filter">Retours</button>
 </div>
 
 <hr class="clearfix" />
@@ -122,9 +122,6 @@
 .ride__interactions { float: right; }
 .ride__price { font-size: 1.6em; text-align: right; margin-bottom: .25em; }
 
-.ride-container.return-go [data-return="False"] { display: none; }
-.ride-container.return-return [data-return="True"] { display: none; }
-
 .ride__join { margin-left: 1em; }
 
 </style>
@@ -176,6 +173,13 @@ $( document ).ready(function() {
 	
 	window.rideshareStore = {
 		'regions': [],
+		'filters': [
+			{'user-is-owner': ''},
+			{'user-is-participant': ''},
+			{'region': ''},
+			{'return': ''},
+			{'status': ''},
+		]
 	}
 	
 	$('#all_rides_container .ride').each(function(){
@@ -186,7 +190,7 @@ $( document ).ready(function() {
 	if (rideshareStore.regions) {
 		rideshareStore.regions = $.uniqueSort(rideshareStore.regions).sort()
 		$('#region-filters').append(
-			'<button id="all-regions" data-region="all" class="btn btn-secondary active region-filter">Toute la France</button> '
+			'<button data-region="" class="btn btn-secondary active region-filter">Toute la France</button> '
 		)
 		$.each($.uniqueSort(rideshareStore.regions), function(i, region) {
 			$('#region-filters').append(
@@ -196,7 +200,24 @@ $( document ).ready(function() {
 	}
 	
 	$('.region-filter').click(function(){
-		var region = $(this).data('region')
+		var rideshareStore.filters.region = $(this).data('region')
+		filterRides()
+	})
+
+	function filterRides() {
+		$('.ride').hide() // Hide all rides
+		var selectors = ''
+			filters = rideshareStore.filters
+		if (filters['user-is-owner']) selectors += '[data-user-is-owner="true"]'
+		if (filters['user-is-participant']) selectors += '[data-user-is-participant="true"]'
+		if (filters['region'] != '') selectors += '[data-region="' + filters.region + '"]'
+		if (filters['return'] != '') selectors += '[data-return="' + filters.return + '"]'
+		
+		selectors += '[]'
+		$('.ride')
+
+	}
+
 		$('.region-filter').removeClass('active')
 		$(this).addClass('active')
 		$('.ride').hide()
@@ -206,14 +227,6 @@ $( document ).ready(function() {
 			console.log('filtering for region ' + region)
 			$('.ride[data-region="' + region + '"').show()
 		}
-	})
-
-	$('.return-filter').click(function(){
-		$('.return-filter').removeClass('active')
-		$(this).addClass('active')
-		$('.ride-container').removeClass('return-all return-go return-return')
-		$('.ride-container').addClass($(this).attr('id'))
-	})
 
 	$('.ride__join').each(function(){
 		var $button = $(this)
