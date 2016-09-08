@@ -137,6 +137,20 @@ STATICFILES_DIRS = (
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 
+
+# EMAIL_SUBJECT_PREFIX = "[Covoiturage JDem] "
+EMAIL_USE_TLS = False
+EMAIL_HOST = 'smtp.jdem.fr'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'covoiturage@jdem.fr'
+EMAIL_HOST_PASSWORD = '8RGDQB9xrwlqmtfyNYIo'
+
+
+
+
+
+
+
 from django.contrib import messages
 MESSAGE_TAGS = { messages.ERROR: 'danger' }
 

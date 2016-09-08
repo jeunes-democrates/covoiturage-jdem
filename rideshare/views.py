@@ -7,7 +7,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render, render_to_response, redirect
@@ -39,10 +40,9 @@ class EventRides(ListView):
 	template_name = 'rideshare/ride_list.html'
 	queryset = Ride.objects.filter(stop__isnull=False).annotate(
 		number_of_riders=Count('rider'),
-		remaining_seats=F('seats')-Count('rider'),
+		remaining_seats=F('seats')-Count('rider'), # counts all riders?
 		departure_datetime=Min('stop__time'),
 		arrival_datetime=Max('stop__time'),
-		number_of_owned_rides=Max('stop__time')
 		)
 
 	def get_context_data(self, **kwargs):
@@ -52,8 +52,33 @@ class EventRides(ListView):
 		context['login_url'] = settings.LOGIN_URL
 		return context
 
-def requestToJoinRide(request, pk):
-	return JsonResponse({'requestSuccessful': 1})
+
+
+class RideDetail(DetailView):
+	queryset = Ride.objects.filter(stop__isnull=False).annotate(
+		number_of_riders=Count('rider'),
+		remaining_seats=F('seats')-Count('rider'),
+		departure_datetime=Min('stop__time'),
+		arrival_datetime=Max('stop__time'),
+		)
+
+	def post(self, request, *args, **kwargs):
+		form = request.POST
+		ride = self.get_object()
+		if form.get('actionType') == 'join':
+			newRider = Rider(ride=ride, user=request.user, status='PENDING')
+			newRider.save()
+			messages.success(request, 'Votre demande a bien été envoyée.')
+		return redirect('rideshare_ride_detail', pk=ride.pk)
+
+	def get_context_data(self, **kwargs):
+		context = super(RideDetail, self).get_context_data(**kwargs)
+		ride = Ride.objects.get(pk=self.kwargs['pk'])
+		user_riders = Rider.objects.filter(ride=ride).exclude(user=None)
+		context['users_who_are_riders'] = []
+		for rider in user_riders :
+			context['users_who_are_riders'] += rider.user
+		return context
 
 
 class CreateNewRide(LoginRequiredMixin, CreateView):
@@ -74,16 +99,12 @@ class CreateNewRide(LoginRequiredMixin, CreateView):
 
 		ride_type = form.get('ride_type')
 
-		if ride_type == 'go-and-return' :
-			pass
-		elif ride_type == 'just-go' :
-			pass
-		elif ride_type == 'just-return':
-			pass
+		# Is this a Aller or Retour ?
+		if ride_type == 'aller-retour' or ride_type == 'aller' : is_return = False
+		elif ride_type == 'retour': is_return = True
 		else :
-			# go back to the form
-			pass
-
+			messages.error(request, "Une erreur a empêché la création de ce trajet. Si cela se reproduit, contactez moi.")
+			redirect('rideshare_list_of_rides_for_event', slug=event.slug)
 
 		event = get_object_or_404(Event, pk=form.get('event_id'))
 
@@ -92,7 +113,9 @@ class CreateNewRide(LoginRequiredMixin, CreateView):
 			owner = request.user,
 			seats = form.get('seats'),
 			price = form.get('price'),
+			is_return = is_return,
 			)
+
 		ride.save()
 
 		number_of_stops = form.get('number_of_stops')
@@ -121,34 +144,128 @@ class CreateNewRide(LoginRequiredMixin, CreateView):
 
 			new_stop.save()
 
+		if Stop.objects.filter(ride=ride):
+			messages.success(request, "Votre trajet a été créé !")
+		else :
+			messages.error(request, "Une erreur a empêché la création de ce trajet. Si cela se reproduit, contactez moi.")
+			ride.delete()
+			# TODO : cleanup this error and the one if the return radio isn't checked
+
 		return redirect('rideshare_list_of_rides_for_event', slug=event.slug)
 
 
+def JoinRide(request, pk):
+	ride = get_object_or_404(Ride, pk=pk)
+	if request.user.is_authenticated():
+		user_pk = request.user.pk
+	else :
+		user_pk = ""
+	return render(request, 'rideshare/ride_join_form.html', {'ride_pk': pk, 'user_pk': user_pk})
 
-#		<QueryDict: {
-#	
-#	'csrfmiddlewaretoken': ['KdGHVVhZOja96do8bRi6ZODFnYUQjswy7aa5z3KHprBFeAD8yPmYMuY94Aep1eIA'],
-#	
-#	'seats': ['5'],
-#	'price': ['28'],
-#	
-#	'origin_place': ['Paris, France'],
-#	'origin_place_name': ['Paris, France'],
-#	'origin_place_latitude': ['48.856614'],
-#	'origin_place_longitude': ['2.3522219'],
-#	'origin_time': ['11:00:00'],
-#	'origin_date': ['22/08/2016'],
-#	'origin_place_precision': ['APPROXIMATE'],
-#	
-#	'destination_place': ['Pau, France'],
-#	'destination_place_name': ['Pau, France'],
-#	'destination_place_longitude': ['-0.370797'],
-#	'destination_place_latitude': ['43.2951']
-#	'destination_date': ['26/08/2016'],
-#	'destination_time': ['14:00:00'],
-#	'destination_place_precision': ['APPROXIMATE'],
-#	
-#	'id_return_radios': ['go-and-return'],
-#	
-#	
-#	}>
+
+def CreateRider(request):
+	form = request.POST
+	ride = get_object_or_404(Ride, pk=form.get('ride_pk'))
+	if form.get('user_pk'):
+		user = get_object_or_404(User, pk=form.get('user_pk'))
+		name = user.get_full_name()
+		email = user.email
+	else :
+		user = None
+		name = form.get('name')
+		email = form.get('email')
+	phone = form.get('phone')
+	message = form.get('message')
+	accepted = ride.owner == user # automatically accepts the request if the user is the ride owner
+	if Rider.objects.filter(email=email).count() > 0 :
+		if user and request.user == user :
+			messages.info(request, 'Vous êtes déjà un des passagers ce covoiturage')
+		else :
+			messages.info(request, 'Ce passager participe déjà à ce covoiturage')
+	elif not name or not email and not phone :
+		messages.error(request, 'Il manque des informations pour créer ce passager.')
+	else :
+		if user and request.user == user or not user :
+			rider = Rider(ride=ride, user=user, name=name, email=email, phone=phone, message=message, accepted=accepted)
+			rider.save()
+			if user : messages.success(request, 'Vous êtes désormais un passager de ce covoiturage')
+			else : messages.success(request, name + 'est désormais un passager de ce covoiturage')
+		else : 	messages.error("Vous n'êtes pas autorisé à faire cela.")
+	return redirect('rideshare_ride_detail', pk=ride.pk)
+
+
+
+def DeleteRider(request, pk):
+	rider = get_object_or_404(Rider, pk=pk)
+	print('=============================')
+	print('=============================')
+	print('=============================')
+	print(rider.ride.owner)
+	print(request.user)
+	print('=============================')
+	print('=============================')
+	print('=============================')
+	if rider.ride.owner == request.user :
+		if form.get('message') :
+			explanation = '<br/><br/>Son message à votre attention:<br/><blockquote><i>{}</i></blockquote>'.format(form.get('message'))
+		else : explanation = ''
+		if request.user == rider.user :
+			messages.success(request, "Vous n'êtes plus passager de ce covoiturage.")
+		else :
+			messages.success(request, "Ce passager a été retiré du covoiturage.")
+		send_mail(
+			'Votre voyage a été annulé !',
+			'''Bonjour {},<br/><br/>
+			Malheureusement, votre covoiturage pour {} a été annulé par {}.{}<br/><br/>
+			- L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
+			settings.EMAIL_HOST_USER,
+			[rider.email],
+			fail_silently=False,
+		)
+		rider.delete()
+	else :
+		messages.error(request, "Vous n'êtes pas autorisé à modifier ce trajet.")
+	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
+
+def AcceptRider(request, pk):
+	rider = get_object_or_404(Rider, pk=pk)
+	ride = rider.ride
+	if ride.rider_set.all().count() >= ride.seats :
+		messages.error(request, "Ce covoiturage est déjà complet.")
+	elif ride.owner == request.user :
+		messages.error(request, "Vous n'êtes pas autorisé à modifier ce trajet.")
+	elif rider.accepted :
+		messages.info(request, "Cette demande a déjà été acceptée.")
+	else :
+		rider.accepted = True
+		rider.save()
+		messages.success(request, "Ce passager a été ajouté à votre covoiturage.")
+		send_mail(
+			'Votre demande de covoiturage a été acceptée !',
+			'''Bonjour {},<br/><br/>
+			Votre demande de covoiturage {} a été acceptée {}.<br/><br/>
+			- L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name()),
+			settings.EMAIL_HOST_USER,
+			[rider.email],
+			fail_silently=False,
+		) # TODO : accéder au trajet
+	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
+
+def DenyRider(request, pk):
+	rider = get_object_or_404(Rider, pk=pk)
+#	if form.get('message') :
+#		explanation = '<br/><br/>Son message à votre attention:<br/><blockquote><i>{}</i></blockquote>'.format(form.get('message'))
+#	else : explanation = ''
+	explanation = ''
+	messages.success(request, "Ce passager a été refusé.")
+	send_mail(
+		'Votre demande de covoiturage a été refusée',
+		'''Bonjour {},<br/><br/>
+		Malheureusement, votre covoiturage pour {} n'a pas été acceptée par {}.{}<br/><br/>
+		- L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
+		settings.EMAIL_HOST_USER,
+		[rider.email],
+		fail_silently=False,
+	)
+	rider.delete()
+	return redirect('rideshare_ride_detail', pk=rider.ride.pk)

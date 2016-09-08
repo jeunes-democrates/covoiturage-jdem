@@ -5,58 +5,62 @@
 
 <div class="col-sm-12" style="margin-top: 1em">
 
-{% if not user.is_authenticated %}
- <a class="pull-right btn btn-primary" style="margin-left: .5em;" href="{{ login_url }}">
-	<i class="fa fa-power-off"></i> Connexion
-	</a>
-{% endif %}
-
- <a class="pull-right btn btn-secondary" style="margin-left: .5em;" href="{% url 'create_new_ride' event.slug %}">
-	<i class="fa fa-plus"></i> Proposer un nouveau trajet
-	</a> 
-
- <a class="pull-right btn btn-secondary" href="mailto:evenements@jeunes-democrates.org?subject=Problème sur le site de coivoiturage">
-	<i class="fa fa-question"></i> Aide<!-- TODO : make it better help -->
-	</a>
-
+<!-- HEADER -->
 
 <h1 class="page-title">{{ event.name }}</h1>
 
-{% if owned_rides or joined_rides or active_requests %}
-	<hr class="clearfix" />
-	<a id="all_rides_filter" class="btn btn-secondary ride-filter active">Tous</a>
-{% endif %}
+<div class="pull-right buttons clearfix">
 
-{% if owned_rides %}
-	<a id="owned_rides_filter" class="btn btn-secondary ride-filter">Mes offres de trajets</a>
-{% endif %}
+	{% if not user.is_authenticated %}
+	 <a class="btn btn-primary" href="{{ login_url }}">
+		<i class="fa fa-power-off"></i> Connexion
+		</a>
+	{% endif %}
+	
+	 <a class="btn btn-secondary" href="{% url 'rideshare_ride_create' event.slug %}">
+		<i class="fa fa-plus"></i> Proposer un nouveau trajet
+		</a> 
+	
+	 <a class="btn btn-secondary" href="mailto:evenements@jeunes-democrates.org?subject=Problème sur le site de coivoiturage">
+		<i class="fa fa-question"></i> Aide<!-- TODO : make it better help -->
+		</a>
+	
+</div>
 
-{% if joined_rides %}
-	<a id="joined_rides_filter" class="btn btn-secondary ride-filter">Les trajets auxquels je suis inscrit</a>
-{% endif %}
+<div style="clear: both;"></div>
 
-{% if active_requests %}
-	<a id="active_requests_filter" class="btn btn-secondary ride-filter">Trajets en cours de souscription</a>
-{% endif %}
+<!-- FILTERS -->
 
-<div id="region-filters"><hr class="clearfix" /></div>
-<div id="return-filters"><hr class="clearfix" />
-	<button data-filter-return="" class="btn btn-secondary return-filter active">Tous</button>
-	<button data-filter-return="aller" class="btn btn-secondary return-filter">Allers</button>
-	<button data-filter-return="retour" class="btn btn-secondary return-filter">Retours</button>
+<hr class="clearfix" />
+<div id="ownership-filters" class="buttons">
+	<button type="button" data-filter-ownership="" class="btn btn-sm btn-outline-primary ownership-filter active">Tous</button>
+	<button type="button" data-filter-ownership="user-is-owner" class="btn btn-sm btn-outline-primary ownership-filter">Mes offres</button>
+	<button type="button" data-filter-ownership="user-is-participant" class="btn btn-sm btn-outline-primary ownership-filter">Mes voyages</button>
+</div>
+
+<hr class="clearfix" />
+<div id="return-filters" class="buttons">
+	<button type="button" data-filter-return="" class="btn btn-sm btn-outline-primary return-filter active">Tous</button>
+	<button type="button" data-filter-return="aller" class="btn btn-sm btn-outline-primary return-filter">Allers</button>
+	<button type="button" data-filter-return="retour" class="btn btn-sm btn-outline-primary return-filter">Retours</button>
+</div>
+
+<hr class="clearfix" />
+<div id="region-filters" class="buttons">
+	<!-- JS Generated -->
 </div>
 
 <hr class="clearfix" />
 
-<div id="all_rides_container" class="ride-container">
+<div class="ride-container">
 
 	{% for object in object_list %}
 	
 	<div class="ride card"
 		data-user-is-owner={% if object.owner == user %}"true"{% else %}"false"{% endif %}
 		data-user-is-participant={% if user in object.riders.all %}"true"{% else %}"false"{% endif %}
-		data-region="{{ object.stop_set.all.0.location.region }}"
-		data-return="{{ object.is_return }}"
+		data-region="{% if object.is_return %}{{ object.stop_set.all.reverse.0.location.region }}{% else %}{{ object.stop_set.all.0.location.region }}{% endif %}"
+		data-return="{% if object.is_return %}retour{% else %}aller{% endif %}"
 		data-status="{% for rider in object.rider_set.all %}{% if rider.user == user %}{{ rider.status }}{% endif %}{% endfor %}"
 		>	
 
@@ -89,11 +93,13 @@
 			<div class="ride__interactions">
 				<div class="ride__price">{{ object.price }} €</div>
 				{% if object.rider__count >= object.seats %}
-				<span class="ride__join btn btn-secondary btn-disabled">Complet</span>
+				<span class="ride__join btn btn-outline-primary btn-disabled">Complet</span>
 				{% else %}
-				<a class="ride__join btn btn-secondary" data-url="{% url 'request_to_join_ride' object.pk %}" href="#join"> 
-				{% endif %}
+				<a class="ride__join btn btn-outline-primary" href="{% url 'rideshare_ride_detail' object.pk %}">
+					<i class="fa fa-search"></i> 
+					Consulter
 				</a>
+				{% endif %}
 			</div>
 		</div>
 	
@@ -102,6 +108,11 @@
 {% endfor %}
 
 </div>
+
+<div class="alert alert-warning no-rides-alert" style="display: none;">
+	<i class="fa fa-exclamation-circle"></i>&nbsp; Il n'y a aucun trajet correspondant à cette recherche.
+</div>
+
 
 {% if not object_list %}
 <p>Il n'y a pas encore de trajets sur cet évènement.</p>
@@ -124,6 +135,8 @@
 
 .ride__join { margin-left: 1em; }
 
+.buttons { line-height: 2; }
+
 </style>
 
 {% endblock content %}
@@ -144,45 +157,18 @@ $( document ).ready(function() {
 		$element.html('<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Chargement...')
 	}
 	
-	$('.ride__join').click(function(){
-		var $this = $(this)
-			request_join_url = $this.attr('data-url')
-		displayLoadingState($this)
-		$.ajax({url: request_join_url}).done(function(result) {
-			$this.removeClass('btn-success btn-error')
-			if (result.requestSuccessful) {
-				$this.addClass('btn-success')
-				$this.html("<i class='fa fa-check'></i> C'est tout bon !")
-			} else {
-				$this.addClass('btn-error')
-				$this.html("<i class='fa fa-check'></i> Ça n'a pas marché :(")
-	
-			}
-		})
-	})
-	
-	$('.ride-filter').click(function(){
-		$('.ride-filter').removeClass('active')
-		$(this).addClass('active')
-		$('.ride-container').hide()
-		var containerName = $(this).attr('id').replace('_filter', '_container')
-		$('#' + containerName).show()
-	})
-	
-	
-	
 	window.rideshareStore = {
 		'regions': [],
-		'filters': [
-			{'user-is-owner': ''},
-			{'user-is-participant': ''},
-			{'region': ''},
-			{'return': ''},
-			{'status': ''},
-		]
+		'filters': {
+			'user-is-owner': '',
+			'user-is-participant': '',
+			'region': '',
+			'return': '',
+			'status': '',
+		}
 	}
 	
-	$('#all_rides_container .ride').each(function(){
+	$('.ride').each(function(){
 		rideshareStore.regions.push($(this).data('region'))
 	})
 	
@@ -190,56 +176,55 @@ $( document ).ready(function() {
 	if (rideshareStore.regions) {
 		rideshareStore.regions = $.uniqueSort(rideshareStore.regions).sort()
 		$('#region-filters').append(
-			'<button data-region="" class="btn btn-secondary active region-filter">Toute la France</button> '
+			'<button type="button" data-filter-region="" class="btn btn-sm btn-outline-primary active region-filter">Toute la France</button> '
 		)
 		$.each($.uniqueSort(rideshareStore.regions), function(i, region) {
 			$('#region-filters').append(
-				'<button data-region="' + region + '" class="btn btn-secondary region-filter">' + region + '</button> '
+				'<button type="button" data-filter-region="' + region + '" class="btn btn-sm btn-outline-primary region-filter">' + region + '</button> '
 			)
 		})
 	}
 	
 	$('.region-filter').click(function(){
-		var rideshareStore.filters.region = $(this).data('region')
+		$('.region-filter').removeClass('active')
+		$(this).addClass('active')
+		rideshareStore.filters.region = $(this).data('filter-region')
 		filterRides()
 	})
 
+	$('.return-filter').click(function(){
+		$('.return-filter').removeClass('active')
+		$(this).addClass('active')
+		rideshareStore.filters.return = $(this).data('filter-return')
+		filterRides()
+	})
+
+	$('.ownership-filter').click(function(){
+		$('.ownership-filter').removeClass('active')
+		$(this).addClass('active')
+		rideshareStore.filters['user-is-owner'] = ""
+		rideshareStore.filters['user-is-participant'] = ""
+		rideshareStore.filters[$(this).data('filter-ownership')] = true
+		filterRides()
+	})
+	
 	function filterRides() {
 		$('.ride').hide() // Hide all rides
+		$('.no-rides-alert').hide()
 		var selectors = ''
 			filters = rideshareStore.filters
 		if (filters['user-is-owner']) selectors += '[data-user-is-owner="true"]'
 		if (filters['user-is-participant']) selectors += '[data-user-is-participant="true"]'
-		if (filters['region'] != '') selectors += '[data-region="' + filters.region + '"]'
-		if (filters['return'] != '') selectors += '[data-return="' + filters.return + '"]'
-		
-		selectors += '[]'
-		$('.ride')
+		if (filters['region'] != '') selectors += '[data-region="' + filters['region'] + '"]'
+		if (filters['return'] != '') selectors += '[data-return="' + filters['return'] + '"]'
+		var rides = $('.ride' + selectors)
+		if (rides.length==0) { // if there are no rides, show alert 
+			$('.no-rides-alert').fadeIn()
+		} else { // otherwise, show the filtered rides
+			$('.ride' + selectors).fadeIn()
+		}
 
 	}
-
-		$('.region-filter').removeClass('active')
-		$(this).addClass('active')
-		$('.ride').hide()
-		if (region=="all") {
-			$('.ride').show()
-		} else {
-			console.log('filtering for region ' + region)
-			$('.ride[data-region="' + region + '"').show()
-		}
-
-	$('.ride__join').each(function(){
-		var $button = $(this)
-			$ride = $button.closest('.ride')
-		if ($ride.data('status') == 'CONFIRMED') {
-			$button.html('<i class="fa fa-times"></i> Annuler')
-			$button.before('<span class="text-success">Vous avez une place à bord de ce trajet.</span>')
-		} else {
-			$button.html('<i class="fa fa-sign-in"></i> Demander à rejoindre')
-		}
-
-
-	})
 
 })
 

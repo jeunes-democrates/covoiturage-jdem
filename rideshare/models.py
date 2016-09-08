@@ -47,7 +47,11 @@ class Ride(models.Model):
 	# cost is divided equally among users
 
 	def __str__(self):
-		return '{} {} — {} seats'.format(self.owner.first_name, self.owner.last_name, str(self.seats))
+		return '[{}] {} {}'.format(
+			self.pk,
+			self.owner.first_name,
+			self.owner.last_name,
+			)
 
 
 
@@ -65,46 +69,24 @@ class Stop(models.Model):
 
 class Rider(models.Model):
 	ride = models.ForeignKey(Ride, on_delete=models.CASCADE)
-	user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
-	status = models.CharField(max_length=32, choices=(
-		('PENDING', 'demande de participation au trajet en attente de confirmation'),
-		('CONFIRMED', 'demande de participation au trajet validée'),
-		('CANCELLED', 'demande de participation au trajet annulée'),
-		('TIMED_OUT', 'demande de participation au trajet expirée'),
-		), default='PENDING')
-	joining_stop = models.ForeignKey(Stop, related_name='joining_rider')
-	leaving_stop = models.ForeignKey(Stop, related_name='leaving_rider')
+	user = models.ForeignKey(User, null=True, blank=True)
+#	joining_stop = models.ForeignKey(Stop, related_name='joining_rider') TODO : use these
+#	leaving_stop = models.ForeignKey(Stop, related_name='leaving_rider')
+	name = models.CharField(max_length=64, default="No Name")
+	email = models.EmailField(default="no@email.com")
+	phone = models.CharField(max_length=32, default="00 00 00 00 00")
+	message = models.CharField(max_length=255, null=True, blank=True)
+	accepted = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
 
 	def __str__(self):
-		return '{}, from {} to {}, riding with {}, status: {}'.format(
-			self.user.username,
-			self.joining_stop.location.name,
-			self.leaving_stop.location.name,
-			self.ride,
+		return '[{}] {}, riding with {}, status: {}'.format(
+			self.pk,
+			self.user.first_name + ' ' + self.user.last_name,
+			self.ride.owner.first_name + ' ' + self.ride.owner.last_name,
 			self.status
 			)
 
-	def confirm(self):
-		self.status = CONFIRM
+	def accept(self):
+		self.status = CONFIRMED
 		self.save()
-
-	def unconfirm(self):
-		self.status = PENDING
-		self.save()
-
-	def cancel(self):
-		self.status = CANCELLED
-		self.save()
-
-	def timeout(self):
-		self.status = TIMED_OUT
-		self.save()
-
-	def has_expired(self):
-		expiration_time = settings.RIDESHARE_REQUEST_EXPIRATION_TIME
-		if self.created + timedelta(hours=expiration_time) > datetime.now() :
-			self.timeout()
-			return True
-		else :
-			return False

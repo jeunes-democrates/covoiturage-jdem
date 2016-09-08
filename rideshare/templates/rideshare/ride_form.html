@@ -26,17 +26,17 @@
 				</label>
 				<div class="col-xs-12">
 <!--					<label class="custom-control custom-radio" for="id_return_1">
-						<input type="radio" value="go-and-return" class="custom-control-input" id="id_return_1" name="ride_type" required checked/>
+						<input type="radio" value="aller-retour" class="custom-control-input" id="id_return_1" name="ride_type" required checked/>
 						<span class="custom-control-indicator"></span>
 						<span class="custom-control-description">Aller retour</span>
 					</label>
 -->					<label class="custom-control custom-radio" for="id_return_2">
-						<input type="radio" value="just-go" class="custom-control-input" id="id_return_2" name="ride_type" required/>
+						<input type="radio" value="aller" class="custom-control-input" id="id_return_2" name="ride_type" required/>
 						<span class="custom-control-indicator"></span>
 						<span class="custom-control-description">Aller</span>
 					</label>
 					<label class="custom-control custom-radio" for="id_return_3">
-						<input type="radio" value="just-return" class="custom-control-input" id="id_return_3" name="ride_type" required/>
+						<input type="radio" value="retour" class="custom-control-input" id="id_return_3" name="ride_type" required/>
 						<span class="custom-control-indicator"></span>
 						<span class="custom-control-description">Retour</span>
 					</label>
@@ -329,7 +329,7 @@ function generateStopFormBlock(id) {
 	} else if (id=='destination') {
 		place_name = "Guidel-Plages"
 		place_label = "<strong>Arrivée</strong> à"
-		date = datify(new Date(2017,9,23))
+		date = datify(new Date(2017,9,25))
 	} else if (id=='stop') {
 		rideshareStore.stops += 1
 		id = id + rideshareStore.stops // "stop1"
@@ -347,17 +347,17 @@ function generateStopFormBlock(id) {
 					<label for="id_' + id + '_place" class="input-group-addon"><i class="stop-icon fa fa-map-marker"></i></label>\
 				</div>\
 				<div class="geocode-selectors"></div>\
-				<input type="text" id="id_' + id + '_place_name" name="' + id + '_place_name" \
+				<input type="hidden" id="id_' + id + '_place_name" name="' + id + '_place_name" \
 					class="hidden-stop-name" value="' + place_name + '" />\
-				<input type="text" id="id_' + id + '_place_latitude" name="' + id + '_place_latitude" \
+				<input type="hidden" id="id_' + id + '_place_latitude" name="' + id + '_place_latitude" \
 					class="hidden-stop-latitude" value="' + place_latitude + '" />\
-				<input type="text" id="id_' + id + '_place_longitude" name="' + id + '_place_longitude" \
+				<input type="hidden" id="id_' + id + '_place_longitude" name="' + id + '_place_longitude" \
 					class="hidden-stop-longitude" value="' + place_longitude + '" />\
-				<input type="text" id="id_' + id + '_place_precision" name="' + id + '_place_precision" \
+				<input type="hidden" id="id_' + id + '_place_precision" name="' + id + '_place_precision" \
 					class="hidden-stop-precision" value="' + place_precision + '" />\
-				<input type="text" id="id_' + id + '_place_region" name="' + id + '_place_region" \
+				<input type="hidden" id="id_' + id + '_place_region" name="' + id + '_place_region" \
 					class="hidden-stop-region" value="' + place_region + '" />\
-				<input type="text" id="id_' + id + '_place_locality" name="' + id + '_place_locality" \
+				<input type="hidden" id="id_' + id + '_place_locality" name="' + id + '_place_locality" \
 					class="hidden-stop-locality" value="' + place_locality + '" />\				<div class="col-xs-12">\
 					<small class="form-text text-muted">\
 						Indiquez une adresse précise !\
@@ -426,6 +426,8 @@ function fillWithEventDetails(when, where) {
 	}
 	$('#id_' + where + '_time').val(time)
 	$('.stop_date').val(date)
+	$('.geocode-seeker').attr('disabled', false)
+	$('#id_' + where + '_place').attr('disabled', true)
 	fieldValidationFeedback($('.geocode-seeker'), "clear")
 	fieldValidationFeedback($('#id_' + where + '_place'), "success")
 }

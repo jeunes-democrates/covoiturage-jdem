@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}{{ block.super }}
+
+<div class="
+	col-xl-6 offset-xl-3
+	col-lg-8 offset-lg-2
+	col-md-10 offset-md-1
+	col-sm-12
+	" style="margin-top: 2em">
+
+<!-- HEADER -->
+
+<h1 class="page-title">Demander à rejoindre un trajet en covoiturage</h1>
+
+<br/>
+
+<!-- CONTENT -->
+<form method="post" action="{% url 'rideshare_rider_create' %}" style="text-align: left;">
+	{% csrf_token %}
+	{% if not user.is_authenticated %}
+	<input type="hidden" name="ride_pk" value="{{ ride_pk }}" required />
+	<input type="hidden" name="user_pk" value="{{ user_pk }}" required />
+	<div class="form-group row">
+		<label class="col-xs-4 col-form-label">Prénom et Nom</label>
+		<div class="col-xs-8">
+			<input class="form-control" type="text" name="name" required />
+		</div>
+	</div>
+	<div class="form-group row">
+		<label class="col-xs-4 col-form-label">Email</label>
+		<div class="col-xs-8">
+			<input class="form-control" type="email" name="email" required />
+		</div>
+	</div>
+	{% endif %}
+	<div class="form-group row">
+		<label class="col-xs-4 col-form-label">Téléphone</label>
+		<div class="col-xs-8">
+			<input class="form-control" type="text" name="phone" required
+			placeholder="00 00 00 00 00"/>
+		</div>
+	</div>
+	<div class="form-group row">
+		<label class="col-xs-4 col-form-label">Message</label>
+		<div class="col-xs-8">
+			<textarea  class="form-control" type="text" name="message"
+			placeholder="Un message addressé à l'organisateur de ce covoiturage..."></textarea>
+		</div>
+	</div>
+	<button type="submit" class="ride__join btn btn-primary btn-block">
+		<i class="fa fa-arrow-circle-right"></i>&nbsp;
+		Demander à rejoindre
+	</button>
+</form>
+
+</div>
+
+<style>
+
+body { margin-bottom: 2em; }
+
+</style>
+
+{% endblock content %}
+
+
+
+{% block scripts %} {{ block.super }}
+
+<script>
+
+$( document ).ready(function() {
+	//
+})
+
+</script>
+
+{% endblock scripts %}

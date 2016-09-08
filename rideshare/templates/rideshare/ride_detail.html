@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}{{ block.super }}
+
+<div class="
+	col-xl-6 offset-xl-3
+	col-lg-8 offset-lg-2
+	col-md-10 offset-md-1
+	col-sm-12
+	" style="margin-top: 2em">
+
+<!-- HEADER -->
+
+<h1 class="page-title">Détail du trajet</h1>
+
+
+<!-- CONTENT -->
+
+<div>
+	Géré par :
+	{% if object.owner == user %} <strong>moi</strong>
+	{% else %}{{ object.owner.first_name }} {{ object.owner.last_name }}
+	{% endif %}
+</div>
+
+<br/>
+<!-- {% if user in object.riders.all %}"true"{% else %}"false"{% endif %} -->
+
+<div class="ride__stops">
+{% for stop in object.stop_set.all %}
+	<div class="ride__stop">
+		<div class="card card-block">
+			<div class="ride__stop__locality">{{ stop.location.locality }}</div>
+			{% if stop.location.locality != stop.location.name %}
+			<div class="ride__stop__name text-muted">{{ stop.location.name }}</div>
+			{% endif %}
+			<div class="ride__stop__datetime">{{ stop.time|date:"l d F" }} à {{ stop.time|time:"H:i" }}</div>
+		</div>
+	</div>
+{% endfor %}
+</div>
+
+<div class="ride__price">Prix : {{ object.price }} €</div>
+
+<br/>
+
+<div>
+	<h3>Participants</h3>
+	
+	{% for rider in object.rider_set.all %}
+		<div class="rider card card-inverse
+			{% if not rider.accepted %} card-warning
+			{% else %} card-primary{% endif %}">
+			<div class="card-block card-text">
+				<div class="card-title rider__name">
+					{% if rider.user %}{{ rider.user.first_name }} {{ rider.user.last_name }}
+					{% else %}{{ rider.name }}{% endif %}
+				</div>
+				<div class="rider__email">{{ rider.email }}</div>
+				<div class="rider__phone">{{ rider.phone }}</div>
+			</div>
+			<div class="card-footer" style="text-align: right;">
+				<small class="rider__edit">
+					<a class="card-text" href="{% url 'rideshare_rider_delete' rider.pk %}">
+						<i class="fa fa-trash-o"></i> Supprimer ce participant
+					</a>
+				</small>
+			</div>
+			{% if not rider.accepted %}
+			<hr/>
+			<div class="card-title">
+				Participant en attente !
+			</div>
+			<div class="card-text">
+				<a class="btn btn-success btn-sm" href="{% url 'rideshare_rider_accept' rider.pk %}">
+				<i class="fa fa-check"></i> Accepter
+				</a>
+				&nbsp;
+				<a class="btn btn-danger btn-sm" href="{% url 'rideshare_rider_deny' rider.pk %}">
+				<i class="fa fa-times"></i> Refuser
+				</a>
+			</div>
+			{% endif %}
+		</div>
+	{% endfor %}
+
+</div>
+
+<br/>
+
+<div class="ride__interactions">
+	{% if object.rider_set.all.count >= object.seats %}
+	<span class="ride__join btn btn-primary btn-disabled">Complet</span>
+	{% else %}
+	<a class="ride__join btn btn-primary btn-block" href="{% url 'rideshare_join_ride' object.pk %}">
+		<i class="fa fa-arrow-circle-right"></i>&nbsp;
+		Demander à rejoindre
+	</a>
+	{% endif %}
+</div>
+
+<p class="text-muted">
+	Places disponibles :
+	<strong class="remaining-seats"
+		data-rider-count="{{ object.rider_set.all.count }}"
+		data-seats="{{object.seats}}"></strong> / {{ object.seats }}
+</p>
+
+</div>
+
+</div>
+
+<style>
+
+body { text-align: center; margin-bottom: 2em; }
+
+.ride__stop > span { display: table-cell; padding: 0 1em; }
+
+.ride__stop:not(:first-child):before { content: '\f063'; font-family: FontAwesome; font-size: 2em; position: relative; top: -.15em; }
+
+.ride__price { font-size: 1.6em; margin-bottom: .25em; }
+
+.ride__stop__locality { font-size: 1.8em; }
+.ride__stop__name { font-style: italic; }
+
+.rider { text-align: left; }
+.rider__name { display: block; font-weight: bold; color: white; }
+.rider__status { font-weight: bold; }
+.rider__email:before { content: '\f0e0'; font-family: "FontAwesome"; margin-right: .5em; }
+.rider__phone:before { content: '\f095'; font-family: "FontAwesome"; margin-right: .5em; }
+
+.card-warning .rider__edit { display: none; }
+
+</style>
+
+{% endblock content %}
+
+
+
+{% block scripts %} {{ block.super }}
+
+<script>
+
+$( document ).ready(function() {
+		
+	window.rideshareStore = {
+	//	'regions': [],
+	}
+
+	function $call(url) {
+		return $.ajax({url: url})
+	}
+
+	$('.remaining-seats').each(function(){
+		var remainingSeats = $(this).data('seats') - $(this).data('rider-count')
+		if (remainingSeats == 0) remainingSeats = "Complet"
+		$(this).text(remainingSeats)
+	})
+
+})
+
+</script>
+
+{% endblock scripts %}
