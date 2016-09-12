@@ -7,7 +7,14 @@
 	<h1>Authentification</h1>
 	<hr>
 	{% csrf_token %}
-	{% bootstrap_form form %}
+	<div class="form-group">
+		<label class="control-label" for="id_username">Email</label>
+		<input autofocus="" class="form-control" id="id_username" maxlength="254" name="username" placeholder="Email" title="" type="text" required="">
+	</div>
+	<div class="form-group">
+		<label class="control-label" for="id_password">Mot de passe</label>
+		<input class="form-control" id="id_password" name="password" placeholder="Mot de passe" title="" type="password" required="">
+	</div>
 	<input type="hidden" name="next" value="{{ next }}" />
 	<hr>
 	{% buttons %}
@@ -15,8 +22,8 @@
 			{% bootstrap_icon "ok" %} Se connecter
 		</button>
 	{% endbuttons %}
+		<p style="text-align: center; font-size: .8em;"><a href="{% url 'register' %}">Créer un compte</a></p>
 		<p style="text-align: center; font-size: .8em;"><a href="{% url 'password_reset' %}">Mot de passe oublié ?</a></p>
-		<p style="text-align: center; font-size: .8em;">Pour obtenir un compte, appeler Antonin !</p>
 </form>
 
 {% endblock %}

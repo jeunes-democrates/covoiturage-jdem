@@ -8,8 +8,8 @@ admin.site.site_header = 'Covoiturage JDem - Administration'
 
 urlpatterns = [
 	url('^', include('django.contrib.auth.urls')),
-	url('^', include('registration.backends.simple.urls')),
 	url(r'^arriere-boutique/', admin.site.urls, name='admin'),
+	url(r'^register/', include('register.urls')),
 	url(r'^covoiturage/', include('rideshare.urls')),
 	url(r'^$', RedirectView.as_view(url="/covoiturage", permanent=False)),
 ]
