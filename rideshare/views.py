@@ -223,7 +223,7 @@ def AcceptRider(request, pk):
 	ride = rider.ride
 	if ride.rider_set.all().count() >= ride.seats :
 		messages.error(request, "Ce covoiturage est déjà complet.")
-	elif ride.owner == request.user :
+	elif ride.owner != request.user :
 		messages.error(request, "Vous n'êtes pas autorisé à modifier ce trajet.")
 	elif rider.accepted :
 		messages.info(request, "Cette demande a déjà été acceptée.")

@@ -9,7 +9,7 @@
 
 <h1 class="page-title">{{ event.name }}</h1>
 
-<div class="pull-right buttons clearfix">
+<div class="buttons" style="margin-top: .5em;">
 
 	{% if not user.is_authenticated %}
 	 <a class="btn btn-primary" href="{{ login_url }}">
@@ -72,7 +72,11 @@
 				{% if object.rider__count == object.seats %}
 				<span class="text-muted">Complet</span>
 				{% else %}
-				Places disponibles : <strong>{{ object.remaining_seats }}</strong> / {{ object.seats }}
+				Places disponibles :
+					<strong><span
+						class="remaining-seats"
+						data-rider-count="{{ object.rider_set.all.count }}"
+						data-seats="{{ object.seats }}"></span></strong> / {{ object.seats }}
 				{% endif %}
 			</span>
 			Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
@@ -169,6 +173,12 @@ $( document ).ready(function() {
 			'status': '',
 		}
 	}
+
+	$('.remaining-seats').each(function(){
+		var remainingSeats = $(this).data('seats') - $(this).data('rider-count')
+		if (remainingSeats == 0) remainingSeats = "Complet"
+		$(this).text(remainingSeats)
+	})
 	
 	$('.ride').each(function(){
 		rideshareStore.regions.push($(this).data('region'))

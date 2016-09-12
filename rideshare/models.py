@@ -82,13 +82,12 @@ class Rider(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 
 	def __str__(self):
-		return '[{}] {}, riding with {}, status: {}'.format(
+		return '[{}] {}, riding with {}'.format(
 			self.pk,
 			self.user.first_name + ' ' + self.user.last_name,
-			self.ride.owner.first_name + ' ' + self.ride.owner.last_name,
-			self.status
+			self.ride.owner.first_name + ' ' + self.ride.owner.last_name
 			)
 
 	def accept(self):
-		self.status = CONFIRMED
+		self.accepted = True
 		self.save()
