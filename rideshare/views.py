@@ -62,33 +62,24 @@ class RideDetail(DetailView):
 		arrival_datetime=Max('stop__time'),
 		)
 
-	def post(self, request, *args, **kwargs):
-		form = request.POST
-		ride = self.get_object()
-		if form.get('actionType') == 'join':
-			newRider = Rider(ride=ride, user=request.user, status='PENDING')
-			newRider.save()
-			messages.success(request, 'Votre demande a bien été envoyée.')
-		return redirect('rideshare_ride_detail', pk=ride.pk)
-
 	def get_context_data(self, **kwargs):
 		context = super(RideDetail, self).get_context_data(**kwargs)
 		ride = Ride.objects.get(pk=self.kwargs['pk'])
 		user_riders = Rider.objects.filter(ride=ride).exclude(user=None)
 		context['users_who_are_riders'] = []
 		for rider in user_riders :
-			context['users_who_are_riders'] += rider.user
+			context['users_who_are_riders'].append(rider.user)
 		return context
 
 
-class CreateNewRide(LoginRequiredMixin, CreateView):
+class CreateRide(LoginRequiredMixin, CreateView):
 	model = Ride
-	fields = ['seats', 'price']
+	fields = ['seats', 'phone', 'price']
 	login_url = settings.LOGIN_URL
 	redirect_field_name = 'redirect_to'
 
 	def get_context_data(self, **kwargs):
-		context = super(CreateNewRide, self).get_context_data(**kwargs)
+		context = super(CreateRide, self).get_context_data(**kwargs)
 		context['event'] = Event.objects.get(slug=self.kwargs['slug']) 
 		context['page_title'] = "Nouveau trajet : {}".format(context['event'].name)
 		return context
@@ -113,6 +104,7 @@ class CreateNewRide(LoginRequiredMixin, CreateView):
 			owner = request.user,
 			seats = form.get('seats'),
 			price = form.get('price'),
+			phone = form.get('phone'),
 			is_return = is_return,
 			)
 
@@ -145,19 +137,24 @@ class CreateNewRide(LoginRequiredMixin, CreateView):
 			new_stop.save()
 
 		if Stop.objects.filter(ride=ride):
-			messages.success(request, "Votre trajet a été créé !")
+			messages.success(request, "Félicitations, votre trajet a été créé !")
 		else :
 			messages.error(request, "Une erreur a empêché la création de ce trajet. Si cela se reproduit, contactez moi.")
 			ride.delete()
 			# TODO : cleanup this error and the one if the return radio isn't checked
 
-		return redirect('rideshare_list_of_rides_for_event', slug=event.slug)
+		return redirect('rideshare_ride_detail', pk=ride.pk)
 
 
 def JoinRide(request, pk):
 	ride = get_object_or_404(Ride, pk=pk)
 	if request.user.is_authenticated():
-		user_pk = request.user.pk
+		user = request.user
+		user_pk = user.pk
+		if request.user == ride.owner :
+			rider = Rider(ride=ride, user=user, name=user.get_full_name(), email=user.email, phone=ride.phone, message='', accepted=True)
+			rider.save()
+			return redirect('rideshare_ride_detail', pk=ride.pk)
 	else :
 		user_pk = ""
 	return render(request, 'rideshare/ride_join_form.html', {'ride_pk': pk, 'user_pk': user_pk})
@@ -189,7 +186,7 @@ def CreateRider(request):
 			rider = Rider(ride=ride, user=user, name=name, email=email, phone=phone, message=message, accepted=accepted)
 			rider.save()
 			if user : messages.success(request, 'Vous êtes désormais un passager de ce covoiturage')
-			else : messages.success(request, name + 'est désormais un passager de ce covoiturage')
+			else : messages.success(request, name + ' est désormais un passager de ce covoiturage')
 		else : 	messages.error("Vous n'êtes pas autorisé à faire cela.")
 	return redirect('rideshare_ride_detail', pk=ride.pk)
 
@@ -197,27 +194,21 @@ def CreateRider(request):
 
 def DeleteRider(request, pk):
 	rider = get_object_or_404(Rider, pk=pk)
-	print('=============================')
-	print('=============================')
-	print('=============================')
-	print(rider.ride.owner)
-	print(request.user)
-	print('=============================')
-	print('=============================')
-	print('=============================')
 	if rider.ride.owner == request.user :
-		if form.get('message') :
-			explanation = '<br/><br/>Son message à votre attention:<br/><blockquote><i>{}</i></blockquote>'.format(form.get('message'))
-		else : explanation = ''
+#		if form.get('message') :
+#			explanation = '%0ASon message à votre attention:%0A<blockquote><i>{}</i></blockquote>'.format(form.get('message'))
+		explanation = ''
 		if request.user == rider.user :
 			messages.success(request, "Vous n'êtes plus passager de ce covoiturage.")
 		else :
 			messages.success(request, "Ce passager a été retiré du covoiturage.")
 		send_mail(
 			'Votre voyage a été annulé !',
-			'''Bonjour {},<br/><br/>
-			Malheureusement, votre covoiturage pour {} a été annulé par {}.{}<br/><br/>
-			- L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
+			'''Bonjour {},
+
+			Malheureusement, votre covoiturage pour {} a été annulé par {}.
+			{} 
+			- L'équipe JDem'''.format(rider.name, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
 			settings.EMAIL_HOST_USER,
 			[rider.email],
 			fail_silently=False,
@@ -242,9 +233,7 @@ def AcceptRider(request, pk):
 		messages.success(request, "Ce passager a été ajouté à votre covoiturage.")
 		send_mail(
 			'Votre demande de covoiturage a été acceptée !',
-			'''Bonjour {},<br/><br/>
-			Votre demande de covoiturage {} a été acceptée {}.<br/><br/>
-			- L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name()),
+			'''Bonjour {}, votre demande de covoiturage {} a été acceptée {}. - L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name()),
 			settings.EMAIL_HOST_USER,
 			[rider.email],
 			fail_silently=False,
@@ -254,15 +243,13 @@ def AcceptRider(request, pk):
 def DenyRider(request, pk):
 	rider = get_object_or_404(Rider, pk=pk)
 #	if form.get('message') :
-#		explanation = '<br/><br/>Son message à votre attention:<br/><blockquote><i>{}</i></blockquote>'.format(form.get('message'))
+#		explanation = '%0ASon message à votre attention:%0A<blockquote><i>{}</i></blockquote>'.format(form.get('message'))
 #	else : explanation = ''
 	explanation = ''
 	messages.success(request, "Ce passager a été refusé.")
 	send_mail(
 		'Votre demande de covoiturage a été refusée',
-		'''Bonjour {},<br/><br/>
-		Malheureusement, votre covoiturage pour {} n'a pas été acceptée par {}.{}<br/><br/>
-		- L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
+		'''Bonjour {}, malheureusement, votre covoiturage pour {} n'a pas été acceptée par {}.{} - L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
 		settings.EMAIL_HOST_USER,
 		[rider.email],
 		fail_silently=False,

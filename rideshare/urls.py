@@ -4,7 +4,7 @@ from django.views.generic.base import RedirectView
 from . import views
 
 urlpatterns = [
-	url(r'^events/(?P<slug>[\x00-\x7F]+)/create-new-ride/$', views.CreateNewRide.as_view(), name='rideshare_ride_create'),
+	url(r'^events/(?P<slug>[\x00-\x7F]+)/create-new-ride/$', views.CreateRide.as_view(), name='rideshare_ride_create'),
 	url(r'^events/(?P<slug>[\x00-\x7F]+)/$', views.EventRides.as_view(), name='rideshare_ride_list'),
 	url(r'^events/$', views.ListOfEvents.as_view(), name='rideshare_event_list'),
 	url(r'^rides/(?P<pk>[0-9]+)/$', views.RideDetail.as_view(), name='rideshare_ride_detail'),

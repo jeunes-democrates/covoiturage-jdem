@@ -76,6 +76,28 @@
 						<label for="id_price" class="input-group-addon">€</label>
 					</div>
 				</div>
+				<div class="col-xs-12">
+					<small class="form-text text-muted" style="text-align: right;">
+						Le règlement devra se faire entre vous et les voyageurs.
+					</small>
+				</div>
+			</div>
+			<hr/>
+			<div class="form-group row">
+				<label for="id_phone" class="col-xs-4 col-form-label">
+					<strong>Téléphone</strong>
+				</label>
+				<div class="col-xs-8">
+					<div class="input-group">
+						<input type="text" class="form-control" id="id_phone" name="phone" placeholder="ex: 06 12 34 56 78" required/>
+						<label for="id_phone" class="input-group-addon"><i class="fa fa-phone"></i></label>
+					</div>
+				</div>
+				<div class="col-xs-12">
+					<small class="form-text text-muted" style="text-align: right;">
+						C'est le numéro auquel vos participants pourront vous joindre.
+					</small>
+				</div>
 			</div>
 			<!-- TODO : verify phone number -->
 			<input id="stop-counter" name="number_of_stops" type="hidden" value="0"/>
@@ -404,9 +426,12 @@ $('#id_origin_time').change(function(){
 
 $('#id_return_2').click(function(){
 	fillWithEventDetails('start', 'destination')
+	$('.geocode-selectors').empty()
 })
+
 $('#id_return_3').click(function(){
 	fillWithEventDetails('end', 'origin')
+	$('.geocode-selectors').empty()
 })
 
 function fillWithEventDetails(when, where) {

@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Count
+from django.db.models.signals import post_save
 from django.utils.text import slugify
 from datetime import datetime, timedelta
 
@@ -39,6 +40,7 @@ class Event(models.Model):
 class Ride(models.Model):
 	event = models.ForeignKey(Event)
 	owner = models.ForeignKey(User, related_name="owned_ride")
+	phone = models.CharField(max_length=32, default="00 00 00 00 00")
 	riders = models.ManyToManyField(User, through="Rider", related_name="ride")
 	seats = models.SmallIntegerField(default=5)
 #	return_ride = models.ForeignKey('self', null=True, blank=True)

@@ -12,6 +12,16 @@
 
 <!-- HEADER -->
 
+<div style="text-align: left;">
+
+	<a class="btn btn-secondary" href="{% url 'rideshare_ride_list' ride.event.slug %}">
+		<i class="fa fa-arrow-left"></i> Retour à la liste
+		</a> 
+	
+</div>
+
+<hr/>
+
 <h1 class="page-title">Détail du trajet</h1>
 
 
@@ -22,9 +32,33 @@
 	{% if object.owner == user %} <strong>moi</strong>
 	{% else %}{{ object.owner.first_name }} {{ object.owner.last_name }}
 	{% endif %}
+	<br/>
+	Tel : {{ ride.phone }}
 </div>
 
 <br/>
+
+{% if user not in users_who_are_riders %}
+<div class="ride__interactions">
+	<a class="ride__join btn btn-primary btn-block" href="{% url 'rideshare_join_ride' object.pk %}">
+		<i class="fa fa-arrow-circle-right"></i>&nbsp;
+		{% if object.owner == user %}Je m'ajoute à la liste des voyageurs
+		{% elif object.rider_set.all.count >= object.seats %}Je m'ajoute à la liste d'attente
+		{% else %}Je souhaite participer à ce trajet
+		{% endif %}
+	</a>
+</div>
+{% endif %}
+
+<p class="text-muted">
+	Places disponibles :
+	<strong class="remaining-seats"
+		data-rider-count="{{ object.rider_set.all.count }}"
+		data-seats="{{object.seats}}"></strong> / {{ object.seats }}
+</p>
+
+<br/>
+
 <!-- {% if user in object.riders.all %}"true"{% else %}"false"{% endif %} -->
 
 <div class="ride__stops">
@@ -57,9 +91,14 @@
 					{% if rider.user %}{{ rider.user.first_name }} {{ rider.user.last_name }}
 					{% else %}{{ rider.name }}{% endif %}
 				</div>
-				<div class="rider__email">{{ rider.email }}</div>
-				<div class="rider__phone">{{ rider.phone }}</div>
+				{% if user is rider.owner %}
+					<div class="rider__email">{{ rider.email }}</div>
+					<div class="rider__phone">{{ rider.phone }}</div>
+				{% elif not rider.accepted %}
+					<div>En attente de confirmation</div>
+				{% endif %}
 			</div>
+			{% if rider.accepted and user is ride.owner %}
 			<div class="card-footer" style="text-align: right;">
 				<small class="rider__edit">
 					<a class="card-text" href="{% url 'rideshare_rider_delete' rider.pk %}">
@@ -67,45 +106,26 @@
 					</a>
 				</small>
 			</div>
-			{% if not rider.accepted %}
-			<hr/>
-			<div class="card-title">
-				Participant en attente !
-			</div>
-			<div class="card-text">
-				<a class="btn btn-success btn-sm" href="{% url 'rideshare_rider_accept' rider.pk %}">
-				<i class="fa fa-check"></i> Accepter
-				</a>
-				&nbsp;
-				<a class="btn btn-danger btn-sm" href="{% url 'rideshare_rider_deny' rider.pk %}">
-				<i class="fa fa-times"></i> Refuser
-				</a>
+			{% elif user is ride.owner %}
+			<div class="card-block">
+				<div class="card-title">
+					Participant en attente !
+				</div>
+				{% if user is ride.owner %}
+				<div class="card-text">
+					<a class="btn btn-success btn-sm" href="{% url 'rideshare_rider_accept' rider.pk %}">
+					<i class="fa fa-check"></i> Accepter
+					</a>
+					&nbsp;
+					<a class="btn btn-danger btn-sm" href="{% url 'rideshare_rider_deny' rider.pk %}">
+					<i class="fa fa-times"></i> Refuser
+					</a>
+				</div>
+				{% endif%}
 			</div>
 			{% endif %}
 		</div>
 	{% endfor %}
-
-</div>
-
-<br/>
-
-<div class="ride__interactions">
-	{% if object.rider_set.all.count >= object.seats %}
-	<span class="ride__join btn btn-primary btn-disabled">Complet</span>
-	{% else %}
-	<a class="ride__join btn btn-primary btn-block" href="{% url 'rideshare_join_ride' object.pk %}">
-		<i class="fa fa-arrow-circle-right"></i>&nbsp;
-		Demander à rejoindre
-	</a>
-	{% endif %}
-</div>
-
-<p class="text-muted">
-	Places disponibles :
-	<strong class="remaining-seats"
-		data-rider-count="{{ object.rider_set.all.count }}"
-		data-seats="{{object.seats}}"></strong> / {{ object.seats }}
-</p>
 
 </div>
 

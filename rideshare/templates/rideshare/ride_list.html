@@ -31,12 +31,14 @@
 
 <!-- FILTERS -->
 
+{% if user.is_authenticated %}
 <hr class="clearfix" />
 <div id="ownership-filters" class="buttons">
 	<button type="button" data-filter-ownership="" class="btn btn-sm btn-outline-primary ownership-filter active">Tous</button>
 	<button type="button" data-filter-ownership="user-is-owner" class="btn btn-sm btn-outline-primary ownership-filter">Mes offres</button>
 	<button type="button" data-filter-ownership="user-is-participant" class="btn btn-sm btn-outline-primary ownership-filter">Mes voyages</button>
 </div>
+{% endif %}
 
 <hr class="clearfix" />
 <div id="return-filters" class="buttons">
