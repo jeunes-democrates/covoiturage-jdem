@@ -347,11 +347,11 @@ function generateStopFormBlock(id) {
 	if (id=='origin') {
 		place_name = "Lyon, France"
 		place_label = "<strong>Départ</strong> de"
-		date = datify(new Date(2017,9,23))
+		date = datify(new Date(2016,9,23)) // TODO : this shouldn't be static yo
 	} else if (id=='destination') {
 		place_name = "Guidel-Plages"
 		place_label = "<strong>Arrivée</strong> à"
-		date = datify(new Date(2017,9,25))
+		date = datify(new Date(2016,9,25))
 	} else if (id=='stop') {
 		rideshareStore.stops += 1
 		id = id + rideshareStore.stops // "stop1"
