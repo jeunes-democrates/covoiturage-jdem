@@ -1,8 +1,6 @@
 '''
 Django settings, generated using Django 1.9.4.
 '''
-import django
-django.setup()
 import os
 
 # Build paths inside the project like this: os.path.join(PROJECT_ROOT, ...)
