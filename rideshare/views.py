@@ -33,6 +33,13 @@ class ListOfEvents(ListView):
 		context['page_title'] = "Prochains évènements"
 		return context
 
+	def dispatch(self, request, *args, **kwargs):
+		if Event.objects.count() == 1 : # il n'y a qu'un évènement
+			event = Event.objects.first()
+			return redirect('rideshare_ride_list', event.slug)
+		else:
+			return super(ListOfEvents, self).dispatch(request, *args, **kwargs)
+
 
 
 #	@method_decorator(login_required, name='dispatch')
