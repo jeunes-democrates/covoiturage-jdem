@@ -198,7 +198,7 @@ def CreateRider(request):
 	phone = form.get('phone')
 	message = form.get('message')
 	accepted = ride.owner == user # automatically accepts the request if the user is the ride owner
-	if Rider.objects.filter(email=email).count() > 0 :
+	if Rider.objects.filter(ride=ride.pk, email=email).count() > 0 :
 		if user and request.user == user :
 			messages.info(request, 'Vous êtes déjà un des passagers ce covoiturage')
 		else :
@@ -227,17 +227,17 @@ def DeleteRider(request, pk):
 			messages.success(request, "Vous n'êtes plus passager de ce covoiturage.")
 		else :
 			messages.success(request, "Ce passager a été retiré du covoiturage.")
-		send_mail(
-			'Votre voyage a été annulé !',
-			'''Bonjour {},
-
-			Malheureusement, votre covoiturage pour {} a été annulé par {}.
-			{} 
-			- L'équipe JDem'''.format(rider.name, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
-			settings.EMAIL_HOST_USER,
-			[rider.email],
-			fail_silently=settings.FAIL_SILENTLY,
-		)
+#		send_mail(
+#			'Votre voyage a été annulé !',
+#			'''Bonjour {},
+#
+#			Malheureusement, votre covoiturage pour {} a été annulé par {}.
+#			{} 
+#			- L'équipe JDem'''.format(rider.name, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
+#			settings.EMAIL_HOST_USER,
+#			[rider.email],
+#			fail_silently=settings.FAIL_SILENTLY,
+#		)
 		rider.delete()
 	else :
 		messages.error(request, "Vous n'êtes pas autorisé à modifier ce trajet.")
@@ -259,13 +259,13 @@ def AcceptRider(request, pk):
 		rider.accepted = True
 		rider.save()
 		messages.success(request, "Ce passager a été ajouté à votre covoiturage.")
-		send_mail(
-			'Votre demande de covoiturage a été acceptée !',
-			'''Bonjour {}, votre demande de covoiturage {} a été acceptée {}. - L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name()),
-			settings.EMAIL_HOST_USER,
-			[rider.email],
-			fail_silently=settings.FAIL_SILENTLY,
-		) # TODO : accéder au trajet
+#		send_mail(
+#			'Votre demande de covoiturage a été acceptée !',
+#			'''Bonjour {}, votre demande de covoiturage {} a été acceptée {}. - L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name()),
+#			settings.EMAIL_HOST_USER,
+#			[rider.email],
+#			fail_silently=settings.FAIL_SILENTLY,
+#		) # TODO : accéder au trajet
 	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
 
 
@@ -278,12 +278,12 @@ def DenyRider(request, pk):
 #	else : explanation = ''
 	explanation = ''
 	messages.success(request, "Ce passager a été refusé.")
-	send_mail(
-		'Votre demande de covoiturage a été refusée',
-		'''Bonjour {}, malheureusement, votre covoiturage pour {} n'a pas été acceptée par {}.{} - L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
-		settings.EMAIL_HOST_USER,
-		[rider.email],
-		fail_silently=settings.FAIL_SILENTLY,
-	)
+#	send_mail(
+#		'Votre demande de covoiturage a été refusée',
+#		'''Bonjour {}, malheureusement, votre covoiturage pour {} n'a pas été acceptée par {}.{} - L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
+#		settings.EMAIL_HOST_USER,
+#		[rider.email],
+#		fail_silently=settings.FAIL_SILENTLY,
+#	)
 	rider.delete()
 	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
