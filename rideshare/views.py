@@ -96,16 +96,15 @@ class CreateRide(LoginRequiredMixin, CreateView):
 
 		form = request.POST
 
-		ride_type = form.get('ride_type')
+		event = get_object_or_404(Event, pk=form.get('event_id'))
 
 		# Is this a Aller or Retour ?
+		ride_type = form.get('ride_type')
 		if ride_type == 'aller-retour' or ride_type == 'aller' : is_return = False
 		elif ride_type == 'retour': is_return = True
 		else :
 			messages.error(request, "Une erreur a empêché la création de ce trajet. Si cela se reproduit, contactez moi.")
 			redirect('rideshare_list_of_rides_for_event', slug=event.slug)
-
-		event = get_object_or_404(Event, pk=form.get('event_id'))
 
 		ride = Ride(
 			event = event,
