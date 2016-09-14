@@ -126,11 +126,6 @@
 
 {% block scripts %} {{ block.super }}
 
-<!-- Enable bootstrap datepickers -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/css/bootstrap-datepicker.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/locales/bootstrap-datepicker.fr.min.js"></script>
-
 <script>
 
 window.rideshareStore = {
@@ -336,22 +331,16 @@ function generateStopFormBlock(id) {
 		place_region = "NO_REGION"
 		place_locality = "NO_LOCALITY"
 		place_label = "<strong>Arrêt</strong> à"
-		date = datify(new Date())
 		time = "11:00"
 
 	// TODO : default dates, default place, ...
 
-	if ($('#id_origin_date').val()) date = $('#id_origin_date').val()
-	if ($('#id_origin_time').val()) time = $('#id_origin_time').val()
-
 	if (id=='origin') {
 		place_name = "Lyon, France"
 		place_label = "<strong>Départ</strong> de"
-		date = datify(new Date(2016,9,23)) // TODO : this shouldn't be static yo
 	} else if (id=='destination') {
 		place_name = "Guidel-Plages"
 		place_label = "<strong>Arrivée</strong> à"
-		date = datify(new Date(2016,9,25))
 	} else if (id=='stop') {
 		rideshareStore.stops += 1
 		id = id + rideshareStore.stops // "stop1"
@@ -380,7 +369,8 @@ function generateStopFormBlock(id) {
 				<input type="hidden" id="id_' + id + '_place_region" name="' + id + '_place_region" \
 					class="hidden-stop-region" value="' + place_region + '" />\
 				<input type="hidden" id="id_' + id + '_place_locality" name="' + id + '_place_locality" \
-					class="hidden-stop-locality" value="' + place_locality + '" />\				<div class="col-xs-12">\
+					class="hidden-stop-locality" value="' + place_locality + '" />\
+				<div class="col-xs-12">\
 					<small class="form-text text-muted">\
 						Indiquez une adresse précise !\
 					</small>\
@@ -390,10 +380,19 @@ function generateStopFormBlock(id) {
 		<div class="form-group row">\
 			<label for="id_' + id + '_date" class="col-xs-4 col-form-label">le</label>\
 			<div class="col-xs-8">\
-				<div class="input-group">\
-					<input id="id_' + id + '_date" name="' + id + '_date" class="form-control stop_date" \
-						 value="' + date + '" placeholder="' + date + '" required/>\
-					<label for="id_' + id + '_date" class="input-group-addon"><i class="fa fa-calendar"></i></label>\
+				<div class="btn-group btn-group-sm" data-toggle="buttons">\
+					<label class="btn btn-primary">\
+						<input type="radio" name="' + id + '_date" value="22/09/2016" autocomplete="off"> Jeu 22\
+					</label>\
+					<label class="btn btn-primary">\
+						<input type="radio" name="' + id + '_date" value="23/09/2016" autocomplete="off"> Ven 23\
+					</label>\
+					<label class="btn btn-primary active">\
+						<input type="radio" name="' + id + '_date" value="24/09/2016" autocomplete="off" checked> Sam 24\
+					</label>\
+					<label class="btn btn-primary">\
+						<input type="radio" name="' + id + '_date" value="25/09/2016" autocomplete="off"> Dim 25\
+					</label>\
 				</div>\
 			</div>\
 		</div>\
@@ -405,24 +404,15 @@ function generateStopFormBlock(id) {
 						value="' + time + '" placeholder="' + time + '" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" required/>\
 					<label for="id_' + id + '_time" class="input-group-addon"><i class="fa fa-clock-o"></i></label>\
 				</div>\
+				<div class="col-xs-12">\
+					<small class="form-text text-muted">\
+						Au format "10:00"\
+					</small>\
+				</div>\
 			</div>\
 		</div>\
 		</div>'
 }
-
-$('#id_origin_date').change(function(){
-	$originDate = $(this).val()
-	$('.stop_date').each(function(){
-		if ($(this).val()=="") $(this).val($originDate)
-	})
-})
-
-$('#id_origin_time').change(function(){
-	$originTime = $(this).val()
-	$('.stop_time').each(function(){
-		if ($(this).val()=="") $(this).val($originTime)
-	})
-})
 
 $('#id_return_2').click(function(){
 	fillWithEventDetails('start', 'destination')
@@ -442,15 +432,7 @@ function fillWithEventDetails(when, where) {
 	$('#id_' + where + '_place_precision').val('{{ event.location.precision }}')
 	$('#id_' + where + '_place_region').val('{{ event.location.region }}')
 	$('#id_' + where + '_place_locality').val('{{ event.location.locality }}')
-	if (when=='start') {
-		var time = '{{ event.start_date|time:"H:i" }}'
-			date = '{{ event.start_date|date:"d/m/Y" }}'
-	} else if (when=='end') {
-		var time = '{{ event.end_date|time:"H:i" }}'
-			date = '{{ event.end_date|date:"d/m/Y" }}'
-	}
 	$('#id_' + where + '_time').val(time)
-	$('.stop_date').val(date)
 	$('.geocode-seeker').attr('disabled', false)
 	$('#id_' + where + '_place').attr('disabled', true)
 	fieldValidationFeedback($('.geocode-seeker'), "clear")
@@ -501,10 +483,6 @@ function datify(date) {
 		d = ymd[2]
 	return( d + '/' + m + '/' + y ) // Ex : 21/03/2016
 }
-
-$(function() {
-	$('.stop_date').datepicker({language: 'fr'})
-})
 
 </script>
 

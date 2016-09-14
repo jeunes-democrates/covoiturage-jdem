@@ -2,6 +2,7 @@ import random, ast
 from datetime import datetime, timedelta
 from django.db.models import *
 from django.conf import settings
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -46,4 +47,8 @@ class Register(FormView):
 				first_name = first_name,
 				last_name = last_name,
 				)
+			user = authenticate(username=email, password=password)
+			if user is not None: login(self.request, user)
+			messages.success(self.request, 'Votre compte a été créé, et vous êtes désormais connecté(e).')
+			return redirect('rideshare_event_list')
 		return super(Register, self).form_valid(form)
