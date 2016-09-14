@@ -85,8 +85,8 @@ class Rider(models.Model):
 	def __str__(self):
 		return '[{}] {}, riding with {}'.format(
 			self.pk,
-			self.user.first_name + ' ' + self.user.last_name,
-			self.ride.owner.first_name + ' ' + self.ride.owner.last_name
+			self.name,
+			self.ride.owner.first_name + '' + self.ride.owner.last_name,
 			)
 
 	def accept(self):
