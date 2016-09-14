@@ -102,8 +102,8 @@ class CreateRide(LoginRequiredMixin, CreateView):
 		if ride_type == 'aller-retour' or ride_type == 'aller' : is_return = False
 		elif ride_type == 'retour': is_return = True
 		else :
-			messages.error(request, "Une erreur a empêché la création de ce trajet. Si cela se reproduit, contactez moi.")
-			redirect('rideshare_list_of_rides_for_event', slug=event.slug)
+			messages.error(request, "Une erreur a empêché la création de ce trajet.")
+			redirect('rideshare_ride_list', slug=event.slug)
 
 		event = get_object_or_404(Event, pk=form.get('event_id'))
 
@@ -287,3 +287,17 @@ def DenyRider(request, pk):
 #	)
 	rider.delete()
 	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
+
+
+
+def SendTestEmail(request):
+	if request.user.is_staff and settings.DEBUG == True :
+		send_mail(
+			subject='Mail test !',
+			message='''Bonjour {}, votre email a bien été envoyé. - L'équipe JDem'''.format(request.user.get_full_name()),
+			recipient_list=['evenements@jeunes-democrates.org',],
+			from_email=settings.DEFAULT_FROM_EMAIL,
+			fail_silently=False,
+		)
+		messages.success(request, 'Email correctement envoyé !')
+	return redirect('rideshare_event_list')

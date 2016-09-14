@@ -133,15 +133,29 @@ STATICFILES_DIRS = (
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 
-EMAIL_USE_TLS = False
-EMAIL_HOST = 'smtp.jdem.fr'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'covoiturage@jdem.fr'
-EMAIL_HOST_PASSWORD = '8RGDQB9xrwlqmtfyNYIo'
 
-# Should emails fail silently ?
-FAIL_SILENTLY = True
+#
+# EMAIL
+#
 
+INSTALLED_APPS += ['anymail',]
+
+EMAIL_SUBJECT_PREFIX = '[Covoiturage JDem] ' # standard setting
+DEFAULT_FROM_EMAIL = 'covoiturage@jdem.fr'
+EMAIL_SHOULD_FAIL_SILENTLY = True 
+
+EMAIL_BACKEND = "anymail.backends.mailgun.MailgunBackend"  # or sendgrid.SendGridBackend, or...
+
+ANYMAIL = {
+	"MAILGUN_API_KEY": "key-7339362bdf13cc475b5666b6979d422b",
+	"MAILGUN_SENDER_DOMAIN": "mailgun.jdem.fr",
+}
+
+
+
+#
+#
+#
 
 
 from django.contrib import messages
