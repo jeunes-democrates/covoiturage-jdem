@@ -77,12 +77,31 @@
 
 <div class="ride__price">Prix : {{ object.price }} €</div>
 
-<br/>
+<hr/>
+<form method="POST" action="{% url 'rideshare_ride_update' object.pk %}" enctype="multipart/form-data">
+	{% if user == ride.owner or ride.message %}<h4>Message du covoitureur :</h4>{% endif %}
+	{% if user == ride.owner %}
+	<div class="form-group">
+		{% csrf_token %}
+		<textarea id="message-input" name="message" class="form-control" maxlength="1024" rows="5"
+		placeholder="Si besoin, donnez des détails sur votre voyage...">{% if ride.message %}{{ ride.message }}{% endif %}</textarea>
+	</div>
+	<div class="form-group">
+		<button class="btn btn-primary">
+			<i class="fa fa-floppy-o"></i>
+			Enregistrer
+		</button>
+	</div>
+	{% elif ride.message %}
+	<blockquote>{{ ride.message }}</blockquote>
+	{% endif %}
+</form>
 
 
 {% if object.rider_set.all %}
+<hr/>
 <div>
-	<h3>Participants</h3>
+	<h4>Participants :</h4>
 	
 	{% for rider in object.rider_set.all %}
 		<div class="rider card card-inverse
@@ -99,7 +118,7 @@
 				{% if rider.message %}
 					</div>
 					<div class="card-footer card-text">
-						<div class="rider__message">{{ rider.message }}</div>
+					<div class="rider__message">{{ rider.message }}</div>
 				{% endif %}
 				{% elif not rider.accepted %}
 					<div>En attente de confirmation</div>

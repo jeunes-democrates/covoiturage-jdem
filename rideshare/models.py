@@ -43,6 +43,7 @@ class Ride(models.Model):
 	phone = models.CharField(max_length=32, default="00 00 00 00 00")
 	riders = models.ManyToManyField(User, through="Rider", related_name="ride")
 	seats = models.SmallIntegerField(default=5)
+	message = models.CharField(max_length=1024, null=True, blank=True)
 #	return_ride = models.ForeignKey('self', null=True, blank=True)
 	is_return = models.BooleanField(default=False)
 	price = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)

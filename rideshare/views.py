@@ -14,6 +14,7 @@ from django.http import HttpResponseRedirect, HttpResponse, HttpRequest, JsonRes
 from django.shortcuts import get_object_or_404, render, render_to_response, redirect
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
+from django.utils.html import strip_tags
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView
 
@@ -152,6 +153,16 @@ class CreateRide(LoginRequiredMixin, CreateView):
 
 		return redirect('rideshare_ride_detail', pk=ride.pk)
 
+def UpdateRide(request, pk):
+	ride = get_object_or_404(Ride, pk=pk)
+	form = request.POST
+	if request.user == ride.owner and request.method == "POST":
+		ride.message = strip_tags(request.POST.get('message'))
+		ride.save()
+		messages.success(request, "Vos modifications ont été enregistrées.")
+	else :
+		messages.error(request, "Vous n'avez pas la permission de modifier ce message.")
+	return redirect('rideshare_ride_detail', ride.pk)
 
 def JoinRide(request, pk):
 	ride = get_object_or_404(Ride, pk=pk)
