@@ -236,7 +236,7 @@ def DeleteRider(request, pk):
 			- L'équipe JDem'''.format(rider.name, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
 			settings.EMAIL_HOST_USER,
 			[rider.email],
-			fail_silently=False,
+			fail_silently=settings.FAIL_SILENTLY,
 		)
 		rider.delete()
 	else :
@@ -264,7 +264,7 @@ def AcceptRider(request, pk):
 			'''Bonjour {}, votre demande de covoiturage {} a été acceptée {}. - L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name()),
 			settings.EMAIL_HOST_USER,
 			[rider.email],
-			fail_silently=False,
+			fail_silently=settings.FAIL_SILENTLY,
 		) # TODO : accéder au trajet
 	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
 
@@ -283,7 +283,7 @@ def DenyRider(request, pk):
 		'''Bonjour {}, malheureusement, votre covoiturage pour {} n'a pas été acceptée par {}.{} - L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
 		settings.EMAIL_HOST_USER,
 		[rider.email],
-		fail_silently=False,
+		fail_silently=settings.FAIL_SILENTLY,
 	)
 	rider.delete()
 	return redirect('rideshare_ride_detail', pk=rider.ride.pk)

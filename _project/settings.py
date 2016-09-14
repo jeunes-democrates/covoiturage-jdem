@@ -139,6 +139,11 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'covoiturage@jdem.fr'
 EMAIL_HOST_PASSWORD = '8RGDQB9xrwlqmtfyNYIo'
 
+# Should emails fail silently ?
+FAIL_SILENTLY = True
+
+
+
 from django.contrib import messages
 MESSAGE_TAGS = { messages.ERROR: 'danger' }
 
