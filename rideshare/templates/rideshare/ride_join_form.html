@@ -19,9 +19,9 @@
 <!-- CONTENT -->
 <form method="post" action="{% url 'rideshare_rider_create' %}" style="text-align: left;">
 	{% csrf_token %}
-	{% if not user.is_authenticated %}
 	<input type="hidden" name="ride_pk" value="{{ ride_pk }}" required />
 	<input type="hidden" name="user_pk" value="{{ user_pk }}" required />
+	{% if not user.is_authenticated %}
 	<div class="form-group row">
 		<label class="col-xs-4 col-form-label">Prénom et Nom</label>
 		<div class="col-xs-8">
