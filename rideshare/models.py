@@ -40,13 +40,13 @@ class Event(models.Model):
 class Ride(models.Model):
 	event = models.ForeignKey(Event)
 	owner = models.ForeignKey(User, related_name="owned_ride")
-	phone = models.CharField(max_length=32, default="00 00 00 00 00")
+	phone = models.CharField(max_length=32, default="00 00 00 00 00", verbose_name=u'Numéro de téléphone')
 	riders = models.ManyToManyField(User, through="Rider", related_name="ride")
-	seats = models.SmallIntegerField(default=5)
-	message = models.CharField(max_length=1024, null=True, blank=True)
+	seats = models.SmallIntegerField(default=5, verbose_name=u'Nombre total de places')
+	message = models.CharField(max_length=1024, null=True, blank=True, verbose_name=u"Message pour les participants")
 #	return_ride = models.ForeignKey('self', null=True, blank=True)
 	is_return = models.BooleanField(default=False)
-	price = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
+	price = models.DecimalField(max_digits=8, decimal_places=2, default=0.00, verbose_name=u'Prix par participant')
 	# cost is divided equally among users
 
 	def __str__(self):

@@ -13,15 +13,16 @@
 	" style="margin-top: 2em">
 
 <div class="card">
+	{% if page_title %}
 	<div class="card-header">
-		<h1 class="text-primary">Créer un compte</h1>
+		<h1 class="text-primary">{{ page_title }}</h1>
 	</div>
+	{% endif %}
 	<div class="card-block">
 		<form class="form-horizontal" method="post" action="#">
 			{% csrf_token %}			
 			{% bootstrap_form form %}
-			<button class="btn btn-block btn-primary">Créer mon compte</button>
-
+			<button class="btn btn-block btn-primary"><i class="fa fa-check"></i> Valider</button>
 		</form>
 	</div>
 </div>

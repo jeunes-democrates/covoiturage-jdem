@@ -21,22 +21,36 @@
 </div>
 
 <hr/>
-
-<h1 class="page-title">Détail du trajet</h1>
-
-
 <!-- CONTENT -->
 
-<div>
-	Géré par :
-	{% if object.owner == user %} <strong>moi</strong>
-	{% else %}{{ object.owner.first_name }} {{ object.owner.last_name }}
+<div style="text-align: left;">
+	<h1 class="page-title">Détail du trajet</h1>
+	<p><strong>Prix par participant :</strong> {{ object.price }} €</p>
+	<p><strong>Places disponibles :</strong>
+		<span class="remaining-seats"
+			data-rider-count="{{ object.rider_set.all.count }}"
+			data-seats="{{object.seats}}"></span> / {{ object.seats }}
+	</p>
+	<p><strong>Géré par :</strong>
+		{% if object.owner == user %}moi
+		{% else %}{{ object.owner.first_name }} {{ object.owner.last_name }}
+		{% endif %}
+	</p>
+	<p><strong>Tel :</strong> {{ ride.phone }}</p>	
+	{% if ride.message %}
+	<p><strong>Message du covoitureur :</strong><br/>
+		<em>{{ ride.message }}</em>
+	</p>
+	{% elif user == ride.owner %}
+	<p class="text-muted"><em>Vous n'avez pas écrit de message à l'attention des participants</em></p>
 	{% endif %}
-	<br/>
-	Tel : {{ ride.phone }}
+	
+	{% if user == ride.owner %}
+	<p><a class="btn btn-secondary" href="{% url 'rideshare_ride_update' object.pk %}"><i class="fa fa-settings"></i> Modifier</a></p>
+	{% endif %}	
 </div>
 
-<br/>
+<hr/>
 
 {% if user not in users_who_are_riders %}
 <div class="ride__interactions">
@@ -49,13 +63,6 @@
 	</a>
 </div>
 {% endif %}
-
-<p class="text-muted">
-	Places disponibles :
-	<strong class="remaining-seats"
-		data-rider-count="{{ object.rider_set.all.count }}"
-		data-seats="{{object.seats}}"></strong> / {{ object.seats }}
-</p>
 
 <br/>
 
@@ -75,33 +82,10 @@
 {% endfor %}
 </div>
 
-<div class="ride__price">Prix : {{ object.price }} €</div>
-
-<hr/>
-<form method="POST" action="{% url 'rideshare_ride_update' object.pk %}" enctype="multipart/form-data">
-	{% if user == ride.owner or ride.message %}<h4>Message du covoitureur :</h4>{% endif %}
-	{% if user == ride.owner %}
-	<div class="form-group">
-		{% csrf_token %}
-		<textarea id="message-input" name="message" class="form-control" maxlength="1024" rows="5"
-		placeholder="Si besoin, donnez des détails sur votre voyage...">{% if ride.message %}{{ ride.message }}{% endif %}</textarea>
-	</div>
-	<div class="form-group">
-		<button class="btn btn-primary">
-			<i class="fa fa-floppy-o"></i>
-			Enregistrer
-		</button>
-	</div>
-	{% elif ride.message %}
-	<blockquote>{{ ride.message }}</blockquote>
-	{% endif %}
-</form>
-
-
 {% if object.rider_set.all %}
 <hr/>
 <div>
-	<h4>Participants :</h4>
+	<h4 style="text-align: left;">Participants :</h4>
 	
 	{% for rider in object.rider_set.all %}
 		<div class="rider card card-inverse

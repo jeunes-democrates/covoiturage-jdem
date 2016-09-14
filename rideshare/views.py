@@ -16,7 +16,7 @@ from django.template import RequestContext
 from django.utils.decorators import method_decorator
 from django.utils.html import strip_tags
 from django.views.generic import ListView, DetailView
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, UpdateView
 
 from .models import *
 from .forms import *
@@ -153,16 +153,21 @@ class CreateRide(LoginRequiredMixin, CreateView):
 
 		return redirect('rideshare_ride_detail', pk=ride.pk)
 
-def UpdateRide(request, pk):
-	ride = get_object_or_404(Ride, pk=pk)
-	form = request.POST
-	if request.user == ride.owner and request.method == "POST":
-		ride.message = strip_tags(request.POST.get('message'))
-		ride.save()
-		messages.success(request, "Vos modifications ont été enregistrées.")
-	else :
-		messages.error(request, "Vous n'avez pas la permission de modifier ce message.")
-	return redirect('rideshare_ride_detail', ride.pk)
+
+
+class UpdateRide(LoginRequiredMixin, UpdateView):
+	model = Ride
+	fields = ['seats', 'price', 'phone', 'message']
+	template_name = 'form.html'
+
+	def get_context_data(self, **kwargs):
+		context = super(UpdateRide, self).get_context_data(**kwargs)
+		context['page_title'] = "Modifier mon trajet"
+		return context
+
+	def get_success_url(self):
+		return reverse('rideshare_ride_detail', kwargs={'pk':self.object.pk})
+
 
 def JoinRide(request, pk):
 	ride = get_object_or_404(Ride, pk=pk)
@@ -176,6 +181,7 @@ def JoinRide(request, pk):
 	else :
 		user_pk = ""
 	return render(request, 'rideshare/ride_join_form.html', {'ride_pk': pk, 'user_pk': user_pk})
+
 
 
 def CreateRider(request):
@@ -210,6 +216,7 @@ def CreateRider(request):
 
 
 
+@login_required
 def DeleteRider(request, pk):
 	rider = get_object_or_404(Rider, pk=pk)
 	if rider.ride.owner == request.user :
@@ -236,6 +243,9 @@ def DeleteRider(request, pk):
 		messages.error(request, "Vous n'êtes pas autorisé à modifier ce trajet.")
 	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
 
+
+
+@login_required
 def AcceptRider(request, pk):
 	rider = get_object_or_404(Rider, pk=pk)
 	ride = rider.ride
@@ -258,6 +268,9 @@ def AcceptRider(request, pk):
 		) # TODO : accéder au trajet
 	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
 
+
+
+@login_required
 def DenyRider(request, pk):
 	rider = get_object_or_404(Rider, pk=pk)
 #	if form.get('message') :
