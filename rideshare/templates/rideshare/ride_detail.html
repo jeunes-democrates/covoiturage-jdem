@@ -45,8 +45,15 @@
 	<p class="text-muted"><em>Vous n'avez pas écrit de message à l'attention des participants</em></p>
 	{% endif %}
 	
-	{% if user == ride.owner %}
-	<p><a class="btn btn-secondary" href="{% url 'rideshare_ride_update' object.pk %}"><i class="fa fa-settings"></i> Modifier</a></p>
+	{% if user == ride.owner or user.is_staff %}
+	<p>
+		{% if user == ride.owner %}
+		<a class="btn btn-secondary" href="{% url 'rideshare_ride_update' object.pk %}"><i class="fa fa-cog"></i> Modifier</a>
+		{% endif %}
+		{% if user.is_staff %}
+		<a class="btn btn-secondary" href="/arriere-boutique/rideshare/ride/{{ object.pk }}"><i class="fa fa-wrench"></i> Administrer</a>
+		{% endif %}
+	</p>
 	{% endif %}	
 </div>
 
