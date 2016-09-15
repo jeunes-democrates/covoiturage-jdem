@@ -141,7 +141,7 @@ LOGIN_REDIRECT_URL = '/'
 INSTALLED_APPS += ['anymail',]
 
 EMAIL_SUBJECT_PREFIX = '[Covoiturage JDem] ' # standard setting
-DEFAULT_FROM_EMAIL = 'covoiturage@jdem.fr'
+DEFAULT_FROM_EMAIL = "Covoiturage JDem <covoiturage@mailgun.mydomain.fr>"
 EMAIL_SHOULD_FAIL_SILENTLY = True 
 
 EMAIL_BACKEND = "anymail.backends.mailgun.MailgunBackend"  # or sendgrid.SendGridBackend, or...
@@ -166,7 +166,3 @@ APPEND_SLASH = True
 ##########################
 #  Settings localisables :
 ##########################
-
-# import local_settings if exist
-try: from local_settings import *
-except ImportError: pass
