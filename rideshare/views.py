@@ -72,6 +72,7 @@ class RideDetail(DetailView):
 
 	def get_context_data(self, **kwargs):
 		context = super(RideDetail, self).get_context_data(**kwargs)
+		context['page_title'] = "Détail du trajet"
 		ride = Ride.objects.get(pk=self.kwargs['pk'])
 		user_riders = Rider.objects.filter(ride=ride).exclude(user=None)
 		context['users_who_are_riders'] = []
@@ -103,8 +104,8 @@ class CreateRide(LoginRequiredMixin, CreateView):
 		if ride_type == 'aller-retour' or ride_type == 'aller' : is_return = False
 		elif ride_type == 'retour': is_return = True
 		else :
-			messages.error(request, "Une erreur a empêché la création de ce trajet. Si cela se reproduit, contactez moi.")
-			redirect('rideshare_list_of_rides_for_event', slug=event.slug)
+			messages.error(request, "Une erreur a empêché la création de ce trajet.")
+			redirect('rideshare_ride_list', slug=event.slug)
 
 		ride = Ride(
 			event = event,
@@ -127,7 +128,7 @@ class CreateRide(LoginRequiredMixin, CreateView):
 				name = form.get(stop_label + '_place_name'),
 				latitude = form.get(stop_label + '_place_latitude'),
 				longitude = form.get(stop_label + '_place_longitude'),
-				precision = form.get(stop_label + '_place_precision'),
+				greetingcision = form.get(stop_label + '_place_greetingcision'),
 				region = form.get(stop_label + '_place_region'),
 				locality = form.get(stop_label + '_place_locality'),
 				)
@@ -179,7 +180,19 @@ def JoinRide(request, pk):
 			return redirect('rideshare_ride_detail', pk=ride.pk)
 	else :
 		user_pk = ""
-	return render(request, 'rideshare/ride_join_form.html', {'ride_pk': pk, 'user_pk': user_pk})
+	return render(request, 'rideshare/ride_join_form.html', {'ride_pk': pk, 'user_pk': user_pk, 'page_title': 'Nouveau passager'})
+
+
+
+#
+# EMAIL PREFIX AND SUFFIX
+#
+
+def email_greeting(request):
+	return  "Bonjour {},".format(request.user.get_full_name())
+
+def email_signature(request):
+	return "- L'équipe JDem"
 
 
 
@@ -203,14 +216,41 @@ def CreateRider(request):
 		else :
 			messages.info(request, 'Ce passager participe déjà à ce covoiturage')
 	elif not name or not email and not phone :
-		messages.error(request, 'Il manque des informations pour créer ce passager.')
+		messages.error(request, 'Il manque des informations pour ajouter ce passager.')
 	else :
 		if user and request.user == user or not user :
 			rider = Rider(ride=ride, user=user, name=name, email=email, phone=phone, message=message, accepted=accepted)
 			rider.save()
-			if user : messages.success(request, 'Vous êtes désormais un passager de ce covoiturage')
-			else : messages.success(request, name + ' est désormais un passager de ce covoiturage')
-		else : 	messages.error("Vous n'êtes pas autorisé à faire cela.")
+			if accepted == False : # si la demande est auto acceptée, c'est que le covoitureur a fait la demande pour lui-même
+				send_mail(
+					subject='Votre demande de covoiturage a été enregistrée',
+					message='''
+						{greeting} votre demande pour rejoindre le covoiturage {ride_url} a été enregistrée. Elle devra être validée {ride_owner}. {signature}
+						'''.format(
+							greeting=email_greeting(request),
+							ride_url= request.build_absolute_uri(reverse('rideshare_ride_detail', args=[ride.pk,])),
+							ride_owner=ride.owner.get_full_name(),
+							signature=email_signature(request),
+							),
+					html_message='''
+						<p>{greeting},</p>
+						<p>Votre demande pour rejoindre le covoiturage {ride_url} a été enregistrée. Elle devra être validée {ride_owner}.</p>
+						<p>{signature}</p>
+						'''.format(
+							greeting=email_greeting(request),
+							ride_url= request.build_absolute_uri(reverse('rideshare_ride_detail', args=[ride.pk,])),
+							ride_owner=ride.owner.get_full_name(),
+							signature=email_signature(request),
+							),
+					recipient_list=[rider.email,],
+					from_email=settings.DEFAULT_FROM_EMAIL,
+					fail_silently=False,
+				)
+				messages.info(request, 'Votre demande a bien été enregistrée, et le covoitureur en a été averti.')
+			else :
+				messages.success('Vous êtes désormais un passager de ce covoiturage.')
+		else :
+			messages.error("Vous n'êtes pas autorisé à faire cela.")
 	return redirect('rideshare_ride_detail', pk=ride.pk)
 
 
@@ -218,31 +258,47 @@ def CreateRider(request):
 @login_required
 def DeleteRider(request, pk):
 	rider = get_object_or_404(Rider, pk=pk)
-	if rider.ride.owner == request.user :
+	ride = rider.ride
+	if ride.owner == request.user :
 #		if form.get('message') :
 #			explanation = '%0ASon message à votre attention:%0A<blockquote><i>{}</i></blockquote>'.format(form.get('message'))
-		explanation = ''
+#		explanation = ''
+#		TODO : add support for explaining why rider was kicked out
+		send_mail(
+			subject='Votre demande de covoiturage a été annulée !',
+			message='''
+				{greeting} votre covoiturage {ride_url} a été annulé par {ride_owner}. Vous pouvez réaliser une nouvelle demande de covoiturage. {signature}
+				'''.format(
+					greeting=email_greeting(request),
+					ride_url= request.build_absolute_uri(reverse('rideshare_ride_detail', args=[ride.pk,])),
+					ride_owner=ride.owner.get_full_name(),
+					signature=email_signature(request),
+					), # TODO : also trigger this on ride cancellation
+			html_message='''
+				<p>{greeting},</p>
+				<p>Votre covoiturage {ride_url} a été annulé par {ride_owner}. Vous pouvez réaliser une nouvelle demande de covoiturage.</p>
+				<p>{signature}</p>
+				'''.format(
+					greeting=email_greeting(request),
+					ride_url= request.build_absolute_uri(reverse('rideshare_ride_detail', args=[ride.pk,])),
+					ride_owner=ride.owner.get_full_name(),
+					signature=email_signature(request),
+					),
+			recipient_list=[rider.email,],
+			from_email=settings.DEFAULT_FROM_EMAIL,
+			fail_silently=False,
+		)
+		rider.delete()
 		if request.user == rider.user :
 			messages.success(request, "Vous n'êtes plus passager de ce covoiturage.")
 		else :
 			messages.success(request, "Ce passager a été retiré du covoiturage.")
-#		send_mail(
-#			'Votre voyage a été annulé !',
-#			'''Bonjour {},
-#
-#			Malheureusement, votre covoiturage pour {} a été annulé par {}.
-#			{} 
-#			- L'équipe JDem'''.format(rider.name, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
-#			settings.EMAIL_HOST_USER,
-#			[rider.email],
-#			fail_silently=settings.FAIL_SILENTLY,
-#		)
-		rider.delete()
 	else :
 		messages.error(request, "Vous n'êtes pas autorisé à modifier ce trajet.")
 	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
 
 
+#TODO : add support for cancelling rides
 
 @login_required
 def AcceptRider(request, pk):
@@ -257,14 +313,31 @@ def AcceptRider(request, pk):
 	else :
 		rider.accepted = True
 		rider.save()
-		messages.success(request, "Ce passager a été ajouté à votre covoiturage.")
-#		send_mail(
-#			'Votre demande de covoiturage a été acceptée !',
-#			'''Bonjour {}, votre demande de covoiturage {} a été acceptée {}. - L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name()),
-#			settings.EMAIL_HOST_USER,
-#			[rider.email],
-#			fail_silently=settings.FAIL_SILENTLY,
-#		) # TODO : accéder au trajet
+		messages.success(request, "Ce passager a été ajouté à votre covoiturage, et un message de confirmation lui a été adressé.")
+		send_mail(
+			subject='Votre demande de covoiturage a été acceptée !',
+			message='''
+				{greeting} votre demande pour rejoindre le covoiturage {ride_url} a été acceptée par {ride_owner}. {signature}
+				'''.format(
+					greeting=email_greeting(request),
+					ride_url= request.build_absolute_uri(reverse('rideshare_ride_detail', args=[ride.pk,])),
+					ride_owner=ride.owner.get_full_name(),
+					signature=email_signature(request),
+					),
+			html_message='''
+				<p>{greeting},</p>
+				<p>Votre demande pour rejoindre le covoiturage {ride_url} a été acceptée par {ride_owner}.</p>
+				<p>{signature}</p>
+				'''.format(
+					greeting=email_greeting(request),
+					ride_url= request.build_absolute_uri(reverse('rideshare_ride_detail', args=[ride.pk,])),
+					ride_owner=ride.owner.get_full_name(),
+					signature=email_signature(request),
+					),
+			recipient_list=[rider.email,],
+			from_email=settings.DEFAULT_FROM_EMAIL,
+			fail_silently=False,
+		)
 	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
 
 
@@ -272,17 +345,63 @@ def AcceptRider(request, pk):
 @login_required
 def DenyRider(request, pk):
 	rider = get_object_or_404(Rider, pk=pk)
+	ride = rider.ride
 #	if form.get('message') :
 #		explanation = '%0ASon message à votre attention:%0A<blockquote><i>{}</i></blockquote>'.format(form.get('message'))
 #	else : explanation = ''
-	explanation = ''
-	messages.success(request, "Ce passager a été refusé.")
-#	send_mail(
-#		'Votre demande de covoiturage a été refusée',
-#		'''Bonjour {}, malheureusement, votre covoiturage pour {} n'a pas été acceptée par {}.{} - L'équipe JDem'''.format(rider.email, rider.ride.event, rider.ride.owner.get_full_name(), explanation),
-#		settings.EMAIL_HOST_USER,
-#		[rider.email],
-#		fail_silently=settings.FAIL_SILENTLY,
-#	)
+#	explanation = ''
+	send_mail(
+		subject='Votre demande de covoiturage a été rejetée',
+		message='''
+			{greeting} votre demande pour rejoindre le covoiturage {ride_url} a malheureusement été rejetée par {ride_owner}. Vous pouvez réaliser une nouvelle demande de covoiturage. {signature}
+			'''.format(
+				greeting=email_greeting(request),
+				ride_url= request.build_absolute_uri(reverse('rideshare_ride_detail', args=[ride.pk,])),
+				ride_owner=ride.owner.get_full_name(),
+				signature=email_signature(request),
+				),
+		html_message='''
+			<p>{greeting},</p>
+			<p>Votre demande pour rejoindre le covoiturage {ride_url} a malheureusement été rejetée par {ride_owner}.</p>
+			<p>Vous pouvez réaliser une nouvelle demande de covoiturage.</p>
+			<p>{signature}</p>
+			'''.format(
+				greeting=email_greeting(request),
+				ride_url= request.build_absolute_uri(reverse('rideshare_ride_detail', args=[ride.pk,])),
+				ride_owner=ride.owner.get_full_name(),
+				signature=email_signature(request),
+				),
+		recipient_list=[rider.email,],
+		from_email=settings.DEFAULT_FROM_EMAIL,
+		fail_silently=False,
+	)
 	rider.delete()
+	messages.success(request, "Ce passager a été refusé.")
 	return redirect('rideshare_ride_detail', pk=rider.ride.pk)
+
+
+
+def SendTestEmail(request):
+	if request.user.is_staff and settings.DEBUG == True :
+		send_mail(
+			subject='Mail test pour Antonin !',
+			message='''
+				{greeting} votre email en texte clair a bien été envoyé. {signature}
+				'''.format(
+					greeting=email_greeting(request),
+					signature=email_signature(request),
+					),
+			html_message='''
+				<p>{greeting},</p>
+				<p>Votre email en HTML a bien été envoyé.</p>
+				<p>{signature}</p>
+				'''.format(
+					greeting=email_greeting(request),
+					signature=email_signature(request)
+					),
+			recipient_list=['antonin.grele@gmail.com',],
+			from_email=settings.DEFAULT_FROM_EMAIL,
+			fail_silently=False,
+		)
+		messages.success(request, 'Email correctement envoyé !')
+	return redirect('rideshare_event_list')
