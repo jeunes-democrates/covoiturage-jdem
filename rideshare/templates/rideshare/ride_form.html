@@ -29,8 +29,8 @@
 <!--				<label class="btn btn-primary active">
 						<input type="radio" value="aller-retour" class="custom-control-input" id="id_return_1" name="ride_type" required checked/>
 					</label>
--->					<label id="id_return_2" class="btn btn-primary active">
-						<input type="radio" value="aller" class="custom-control-input" name="ride_type" required checked/>Aller
+-->					<label id="id_return_2" class="btn btn-primary">
+						<input type="radio" value="aller" class="custom-control-input" name="ride_type" required/>Aller
 					</label>
 					<label id="id_return_3" class="btn btn-primary">
 						<input type="radio" value="retour" class="custom-control-input" name="ride_type" required/>Retour
@@ -38,6 +38,9 @@
 				</div>
 			</div>
 		</div>
+
+		<div class="hideable-content">
+
 		<div id="ride_stops_container">
 			<button id="remove_stop" type="button" class="btn btn-warning btn-block btn-sm" style="display: none;">
 				<i class="fa fa-times"></i> Supprimer cet arrêt
@@ -96,6 +99,7 @@
 		<input id="stop-counter" name="number_of_stops" type="hidden" value="0"/>
 		<input name="event_id" type="hidden" value="{{ event.pk }}"/>
 		<button type="submit" class="btn btn-primary btn-block">Créer</button>
+		</div>
 	</form>
 
 </div>
@@ -110,6 +114,7 @@
 .geocode-selectors {  }
 .geocode-selector { line-height: 1.15; text-align: left; margin-top: .15em !important; }
 
+.hideable-content { display: none; }
 
 </style>
 
@@ -413,11 +418,13 @@ function generateStopFormBlock(id) {
 }
 
 $('#id_return_2').click(function(){
+	$('.hideable-content').fadeIn()
 	fillWithEventDetails('start', 'destination')
 	$('.geocode-selectors').empty()
 })
 
 $('#id_return_3').click(function(){
+	$('.hideable-content').fadeIn()
 	fillWithEventDetails('end', 'origin')
 	$('.geocode-selectors').empty()
 })
