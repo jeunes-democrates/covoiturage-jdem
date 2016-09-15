@@ -17,94 +17,87 @@
 		<h1 class="text-primary">Nouveau trajet</h1>
 		<h2 class="text-muted">{{ event.name }}</h2>
 	</div>
-	<div class="card-block">
-		<form id="create-new-ride" action="" method="post" data-stops="0">
-			{% csrf_token %}
-			<div class="form-group row">
-				<label for="id_return" class="col-xs-12 col-form-label">
-					Vous souhaitez proposer un :
-				</label>
-				<div class="col-xs-12">
-<!--					<label class="custom-control custom-radio" for="id_return_1">
+	
+	<form id="create-new-ride" style="text-align: center;" action="" method="post" data-stops="0">
+		{% csrf_token %}
+		<div class="form-group row card-block">
+			<label for="id_return" class="col-xs-12 col-form-label">
+				Vous souhaitez proposer un :
+			</label>
+			<div class="col-xs-12">
+				<div class="btn-group" data-toggle="buttons">
+<!--				<label class="btn btn-primary active">
 						<input type="radio" value="aller-retour" class="custom-control-input" id="id_return_1" name="ride_type" required checked/>
-						<span class="custom-control-indicator"></span>
-						<span class="custom-control-description">Aller retour</span>
 					</label>
--->					<label class="custom-control custom-radio" for="id_return_2">
-						<input type="radio" value="aller" class="custom-control-input" id="id_return_2" name="ride_type" required/>
-						<span class="custom-control-indicator"></span>
-						<span class="custom-control-description">Aller</span>
+-->					<label id="id_return_2" class="btn btn-primary active">
+						<input type="radio" value="aller" class="custom-control-input" name="ride_type" required checked/>Aller
 					</label>
-					<label class="custom-control custom-radio" for="id_return_3">
-						<input type="radio" value="retour" class="custom-control-input" id="id_return_3" name="ride_type" required/>
-						<span class="custom-control-indicator"></span>
-						<span class="custom-control-description">Retour</span>
+					<label id="id_return_3" class="btn btn-primary">
+						<input type="radio" value="retour" class="custom-control-input" name="ride_type" required/>Retour
 					</label>
 				</div>
 			</div>
-			<hr/>
-			<div class="form-group row">
-				<label for="id_seats" class="col-xs-8 col-form-label">
-					Quelle est la <strong>capacité totale</strong> du véhicule ?
-				</label>
-				<div class="col-xs-4">
-					<div class="input-group">
-						<input type="text" class="form-control" id="id_seats" name="seats" placeholder="ex: 5" required/>
-						<label for="id_seats" class="input-group-addon">💺</label>
-					</div>
-				</div>
-				<div class="col-xs-12">
-					<small class="form-text text-muted">
-						Vous pourrez indiquer la disponibilité des places dans l'étape suivante.
-					</small>
-				</div>
-			</div>
-			<div id="ride_stops_container">
-				<button id="remove_stop" type="button" class="btn btn-warning btn-block btn-sm" style="display: none;">
-					<i class="fa fa-times"></i> Supprimer cet arrêt
-				</button>
-<!--				<button id="add_stop" type="button" class="btn btn-info btn-block btn-sm">
-					<i class="fa fa-plus"></i> Ajouter un autre arrêt
-				</button> TODO : enable
--->			</div>
-			<hr/>
-			<div class="form-group row">
-				<label for="id_price" class="col-xs-8 col-form-label"><strong>Prix</strong> par participant</label>
-				<div class="col-xs-4">
-					<div class="input-group">
-						<input type="text" class="form-control" id="id_price" name="price" placeholder="ex: 30" required>
-						<label for="id_price" class="input-group-addon">€</label>
-					</div>
-				</div>
-				<div class="col-xs-12">
-					<small class="form-text text-muted" style="text-align: right;">
-						Le règlement devra se faire entre vous et les voyageurs.
-					</small>
+		</div>
+		<div id="ride_stops_container">
+			<button id="remove_stop" type="button" class="btn btn-warning btn-block btn-sm" style="display: none;">
+				<i class="fa fa-times"></i> Supprimer cet arrêt
+			</button>
+<!--			<button id="add_stop" type="button" class="btn btn-info btn-block btn-sm">
+				<i class="fa fa-plus"></i> Ajouter un autre arrêt
+			</button> TODO : enable
+-->		</div>
+		<div class="form-group row card-block">
+			<label for="id_seats" class="col-xs-12 col-form-label">
+				Quelle est la <strong>capacité totale</strong> du véhicule ?
+			</label>
+			<div class="col-xs-12">
+				<div class="input-group">
+					<input type="text" class="form-control" id="id_seats" name="seats" placeholder="ex: 5" required/>
+					<label for="id_seats" class="input-group-addon">💺</label>
 				</div>
 			</div>
-			<hr/>
-			<div class="form-group row">
-				<label for="id_phone" class="col-xs-4 col-form-label">
-					<strong>Téléphone</strong>
-				</label>
-				<div class="col-xs-8">
-					<div class="input-group">
-						<input type="text" class="form-control" id="id_phone" name="phone" placeholder="ex: 06 12 34 56 78" required/>
-						<label for="id_phone" class="input-group-addon"><i class="fa fa-phone"></i></label>
-					</div>
-				</div>
-				<div class="col-xs-12">
-					<small class="form-text text-muted" style="text-align: right;">
-						C'est le numéro auquel vos participants pourront vous joindre.
-					</small>
+			<div class="col-xs-12">
+				<small class="form-text text-muted">
+					Vous pourrez indiquer la disponibilité des places dans l'étape suivante.
+				</small>
+			</div>
+		</div>
+		<div class="form-group row card-block">
+			<label for="id_price" class="col-xs-12 col-form-label">Quel sera le <strong>montant</strong> demandé aux participant ?</label>
+			<div class="col-xs-12">
+				<div class="input-group">
+					<input type="text" class="form-control" id="id_price" name="price" placeholder="ex: 30" required>
+					<label for="id_price" class="input-group-addon">€</label>
 				</div>
 			</div>
-			<!-- TODO : verify phone number -->
-			<input id="stop-counter" name="number_of_stops" type="hidden" value="0"/>
-			<input name="event_id" type="hidden" value="{{ event.pk }}"/>
-			<button type="submit" class="btn btn-primary btn-block">Créer</button>
-		</form>
-	</div>
+			<div class="col-xs-12">
+				<small class="form-text text-muted">
+					Le règlement devra se faire entre vous et les voyageurs.
+				</small>
+			</div>
+		</div>
+		<div class="form-group row card-block">
+			<label for="id_phone" class="col-xs-12 col-form-label">
+				Le numéro de <strong>téléphone</strong> auquel on pourra vous joindre ?
+			</label>
+			<div class="col-xs-12">
+				<div class="input-group">
+					<input type="text" class="form-control" id="id_phone" name="phone" placeholder="ex: 06 12 34 56 78" required/>
+					<label for="id_phone" class="input-group-addon"><i class="fa fa-phone"></i></label>
+				</div>
+			</div>
+			<div class="col-xs-12">
+				<small class="form-text text-muted">
+					C'est le numéro auquel vos participants pourront vous joindre.
+				</small>
+			</div>
+		</div>
+		<!-- TODO : verify phone number -->
+		<input id="stop-counter" name="number_of_stops" type="hidden" value="0"/>
+		<input name="event_id" type="hidden" value="{{ event.pk }}"/>
+		<button type="submit" class="btn btn-primary btn-block">Créer</button>
+	</form>
+
 </div>
 
 </div>
@@ -348,10 +341,10 @@ function generateStopFormBlock(id) {
 	}
 
 	return html = 
-	   '<div id="wrapper_' + id + '" class="stop-wrapper"><hr/>\
+	   '<div id="wrapper_' + id + '" class="stop-wrapper card-block">\
 		<div class="form-group row">\
-			<label for="id_' + id + '_place" class="col-xs-4 col-form-label">' + place_label + '</label>\
-			<div class="col-xs-8">\
+			<label for="id_' + id + '_place" class="col-xs-12 col-form-label">' + place_label + '</label>\
+			<div class="col-xs-12">\
 				<div class="input-group">\
 					<input id="id_' + id + '_place" name="' + id + '_place" type="text" class="form-control geocode-seeker" required \
 						value="' + "" + '" placeholder="ex: ' + place_name + '" autocomplete="off"/>\
@@ -378,9 +371,8 @@ function generateStopFormBlock(id) {
 			</div>\
 		</div>\
 		<div class="form-group row">\
-			<label for="id_' + id + '_date" class="col-xs-4 col-form-label">le</label>\
-			<div class="col-xs-8">\
-				<div class="btn-group btn-group-sm" data-toggle="buttons">\
+			<div class="col-xs-12">\
+				<div class="btn-group" data-toggle="buttons">\
 					<label class="btn btn-primary">\
 						<input type="radio" name="' + id + '_date" value="22/09/2016" autocomplete="off"> Jeu 22\
 					</label>\
@@ -397,8 +389,7 @@ function generateStopFormBlock(id) {
 			</div>\
 		</div>\
 		<div class="form-group row">\
-			<label for="id_' + id + '_time" class="col-xs-4 col-form-label">à</label>\
-			<div class="col-xs-8">\
+			<div class="col-xs-12">\
 				<div class="input-group">\
 					<input id="id_' + id + '_time" name="' + id + '_time" type="text" class="form-control stop_time" \
 						value="' + time + '" placeholder="' + time + '" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" required/>\
