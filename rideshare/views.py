@@ -128,7 +128,7 @@ class CreateRide(LoginRequiredMixin, CreateView):
 				name = form.get(stop_label + '_place_name'),
 				latitude = form.get(stop_label + '_place_latitude'),
 				longitude = form.get(stop_label + '_place_longitude'),
-				greetingcision = form.get(stop_label + '_place_greetingcision'),
+				precision = form.get(stop_label + '_place_precision'),
 				region = form.get(stop_label + '_place_region'),
 				locality = form.get(stop_label + '_place_locality'),
 				)
