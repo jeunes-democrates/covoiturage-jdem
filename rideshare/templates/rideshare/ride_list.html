@@ -59,6 +59,7 @@
 	{% for ride in object_list %}
 	
 	<div class="ride card"
+		{% if user.is_staff %}title="Trajet n°{{ ride.pk }}" {% endif %}
 		data-user-is-owner={% if ride.owner == user %}"true"{% else %}"false"{% endif %}
 		data-user-is-participant={% if user in ride.riders.all %}"true"{% else %}"false"{% endif %}
 		data-region="{% if ride.is_return %}{{ ride.stop_set.all.reverse.0.location.region }}{% else %}{{ ride.stop_set.all.0.location.region }}{% endif %}"
