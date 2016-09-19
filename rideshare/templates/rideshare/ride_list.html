@@ -56,57 +56,80 @@
 
 <div class="ride-container">
 
-	{% for object in object_list %}
+	{% for ride in object_list %}
 	
 	<div class="ride card"
-		data-user-is-owner={% if object.owner == user %}"true"{% else %}"false"{% endif %}
-		data-user-is-participant={% if user in object.riders.all %}"true"{% else %}"false"{% endif %}
-		data-region="{% if object.is_return %}{{ object.stop_set.all.reverse.0.location.region }}{% else %}{{ object.stop_set.all.0.location.region }}{% endif %}"
-		data-return="{% if object.is_return %}retour{% else %}aller{% endif %}"
-		data-status="{% for rider in object.rider_set.all %}{% if rider.user == user %}{{ rider.status }}{% endif %}{% endfor %}"
+		data-user-is-owner={% if ride.owner == user %}"true"{% else %}"false"{% endif %}
+		data-user-is-participant={% if user in ride.riders.all %}"true"{% else %}"false"{% endif %}
+		data-region="{% if ride.is_return %}{{ ride.stop_set.all.reverse.0.location.region }}{% else %}{{ ride.stop_set.all.0.location.region }}{% endif %}"
+		data-return="{% if ride.is_return %}retour{% else %}aller{% endif %}"
+		data-status="{% for rider in ride.rider_set.all %}{% if rider.user == user %}{{ rider.status }}{% endif %}{% endfor %}"
 		>	
 
 
 		<div class="card-header">
-			<span class="ride__remaining-seats">
-				{% if object.rider__count == object.seats %}
-				<span class="text-muted">Complet</span>
-				{% else %}
-				Places disponibles :
+
+			<div class="ride__date ride__data-wrapper">
+				<div class="ride__weekday ride__data-title">{{ ride.departure_datetime|date:"l" }}</div>
+				<div class="ride__monthday ride__data-point">{{ ride.departure_datetime|date:"d b" }}</div>
+			</div>
+
+			<div class="ride__remaining-seats ride__data-wrapper">
+				<div class="ride__data-title">Sièges restants</div>
+				<div class="ride__data-point">
+					{% if ride.rider__count == ride.seats %}
+					<span class="text-muted">Complet</span>
+					{% else %}
 					<strong><span
 						class="remaining-seats"
-						data-rider-count="{{ object.rider_set.all.count }}"
-						data-seats="{{ object.seats }}"></span></strong> / {{ object.seats }}
-				{% endif %}
-			</span>
-			Départ le <strong>{{ object.departure_datetime|date:"l d F" }}</strong>
-			{% if object.departure_date|date != object.arrival_date|date %}
-			, arrivée le <strong>{{ object.arrival_datetime|date:"l d F" }}, </strong>
+						data-rider-count="{{ ride.rider_set.all.count }}"
+						data-seats="{{ ride.seats }}"></span></strong>
+					<span class="gray"> / {{ ride.seats }}</span>
+					{% endif %}
+				</div>
+			</div>
+
+			<div class="ride__data-wrapper">
+				<div class="ride__data-title">Covoitureu·r·se</div>
+				<div class="ride__data-point">{{ ride.owner.first_name }} {{ ride.owner.last_name }}</div>
+			</div>
+
+			<div class="ride__data-wrapper">
+				<div class="ride__data-title">Prix</div>
+				<div class="ride__data-point">
+					{% if ride.price %}{{ ride.price }} €
+					{% else %}<span class="text-muted">Gratuit</span>
+					{% endif%}
+				</div>
+			</div>
+
+			{% comment %}
+			<!-- TODO : display arrival date if different from departure -->
+			{% if ride.departure_date|date != ride.arrival_date|date %}
+			, arrivée le <strong>{{ ride.arrival_datetime|date:"l d F" }}, </strong>
 			{% endif %}
-			avec {{ object.owner.first_name }} {{ object.owner.last_name }}
+			{% endcomment %}
+
 		</div>
 	
-		<div class="card-block">
+		<div class="card-block ride__summary">
+
 			<div class="ride__stops">
-			{% for stop in object.stop_set.all %}
+			{% for stop in ride.stop_set.all %}
 				<div class="ride__stop">
-					<span class="ride__stop__pin"><i class="fa fa-dot-circle-o"></i> </span>
 					<span class="ride__stop__time">{{ stop.time|time:"H:i" }}</span>
-					<span class="ride__stop__location">{{ stop.location.locality }}</span>
+					<span class="ride__stop__locality">{{ stop.location.locality }}</span>
+					<span class="ride__stop__location text-muted">{{ stop.location.name }}</span>
 				</div>
 			{% endfor %}
 			</div>
+
 			<div class="ride__interactions">
-				<div class="ride__price">{{ object.price }} €</div>
-				{% if object.rider__count >= object.seats %}
-				<span class="ride__join btn btn-outline-primary btn-disabled">Complet</span>
-				{% else %}
-				<a class="ride__join btn btn-outline-primary" href="{% url 'rideshare_ride_detail' object.pk %}">
-					<i class="fa fa-search"></i> 
-					Consulter
+				<a class="ride__detail" href="{% url 'rideshare_ride_detail' ride.pk %}">
+					<i class="fa fa-2x fa-chevron-right"></i> 
 				</a>
-				{% endif %}
 			</div>
+
 		</div>
 	
 	</div>
@@ -130,16 +153,33 @@
 
 .page-title { display: inline; }
 
-.ride__remaining-seats { float: right; margin-left: 1em; }
+.gray { color: #818a91; }
 
-.ride__stops { display: table; float: left; }
-.ride__stop { display: table-row; }
-.ride__stop > span { display: table-cell; padding: 0 1em; }
+.ride .card-header { padding: 0; display: flex; flex-wrap: wrap; }
 
-.ride__interactions { float: right; }
+.ride__data-wrapper:not(:first-child) { border-left: 1px solid #ddd; }
+.ride__data-wrapper {
+	display: inline-block; line-height: 1.35; text-transform: uppercase;
+	border-bottom: 1px solid #ddd; padding: 1em;
+	margin-left: -1px; margin-bottom: -1px; /* fusionne les bordures des blocs avec ceux du header de la carte */
+}
+.ride__data-title { font-size: .8em; color: #818a91; }
+.ride__data-point { font-size: 1.1em; }
+
+.ride__monthday { color: #FF6000; font-weight: bold; font-size: 1.5em; margin-top: -.2em; margin-bottom: -.18em; }
+
+.ride__summary { display: flex; padding: 0; align-items: center; }
+
+.ride__stops { width: calc(100% - 4em); } /* Full width minus the ">" button */
+.ride__stop { display: flex; align-items: center; margin: .5em 0; }
+.ride__stop > span { padding: 0 1em; }
+.ride__stop__time { width: 5em; max-width: 20%; }
+.ride__stop__locality { width: 8em; max-width: 30%; font-weight: bold; }
+.ride__stop__location { max-width: 50%; font-size: .8em; }
+
+.ride__interactions { text-align: center; width: 4em; }
+.ride__detail { padding: 1em; }
 .ride__price { font-size: 1.6em; text-align: right; margin-bottom: .25em; }
-
-.ride__join { margin-left: 1em; }
 
 .buttons { line-height: 2; }
 
