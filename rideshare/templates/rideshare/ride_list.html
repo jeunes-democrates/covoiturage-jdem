@@ -3,31 +3,46 @@
 
 {% block content %}{{ block.super }}
 
-<div class="col-sm-12" style="margin-top: 1em">
-
 <!-- HEADER -->
 
-<h1 class="page-title">{{ event.name }}</h1>
+<nav class="navbar navbar-light bg-faded">
+	<a class="navbar-brand" href="/">{{ event.name }}</a>
+	<ul class="nav navbar-nav">
 
-<div class="buttons" style="margin-top: .5em;">
+		{% if meta.multiple_events %}
+		<li class="nav-item active">
+			<a class="nav-link" href="#">Évènements</a>
+		</li>
+		{% endif %}
+
+	</ul>
+
+	<div class="pull-xs-right">
+	
+		<a class="btn btn-secondary" href="{% url 'rideshare_ride_create' event.slug %}">
+			<i class="fa fa-car"></i> Proposer un trajet
+		</a>
+
+		<a class="btn btn-secondary" href="{% url 'rideshare_ride_create' event.slug %}">
+			<i class="fa fa-plus"></i> Demander un trajet
+		</a>
+
+		<a class="btn btn-secondary" href="mailto:evenements@jeunes-democrates.org?subject=Problème sur le site de coivoiturage">
+			<i class="fa fa-question"></i> Aide<!-- TODO : make it better help -->
+		</a>
 
 	{% if not user.is_authenticated %}
-	 <a class="btn btn-primary" href="{{ login_url }}">
-		<i class="fa fa-power-off"></i> Connexion
+		<a class="btn btn-secondary" href="{{ meta.login_url }}">
+			<i class="fa fa-sign-in"></i> Connexion
+		</a>
+	{% else %}
+		<a class="btn btn-outline-secondary" href="{{ meta.logout_url }}">
+			<i class="fa fa-power-off"></i> Déconnexion
 		</a>
 	{% endif %}
 	
-	 <a class="btn btn-secondary" href="{% url 'rideshare_ride_create' event.slug %}">
-		<i class="fa fa-plus"></i> Proposer un nouveau trajet
-		</a> 
-	
-	 <a class="btn btn-secondary" href="mailto:evenements@jeunes-democrates.org?subject=Problème sur le site de coivoiturage">
-		<i class="fa fa-question"></i> Aide<!-- TODO : make it better help -->
-		</a>
-	
-</div>
-
-<div style="clear: both;"></div>
+	</div>
+</nav>
 
 <!-- FILTERS -->
 
