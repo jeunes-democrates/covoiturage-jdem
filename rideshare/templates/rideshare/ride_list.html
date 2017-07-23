@@ -5,8 +5,10 @@
 
 <!-- HEADER -->
 
-<nav class="navbar navbar-light bg-faded">
-	<a class="navbar-brand" href="/">{{ event.name }}</a>
+<nav>
+	<br/>
+	<a class="text-muted" href="/">Covoitorange</a>
+	<h1>{{ event.name }}</h1>
 	<ul class="nav navbar-nav">
 
 		{% if meta.multiple_events %}
@@ -36,7 +38,7 @@
 			<i class="fa fa-sign-in"></i> Connexion
 		</a>
 	{% else %}
-		<a class="btn btn-outline-secondary" href="{{ meta.logout_url }}">
+		<a class="btn btn-secondary" href="{{ meta.logout_url }}">
 			<i class="fa fa-power-off"></i> Déconnexion
 		</a>
 	{% endif %}
@@ -157,6 +159,7 @@
 .ride__join { margin-left: 1em; }
 
 .buttons { line-height: 2; }
+.buttons button { cursor: pointer; }
 
 </style>
 

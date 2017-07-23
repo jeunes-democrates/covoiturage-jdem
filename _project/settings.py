@@ -25,6 +25,7 @@ INSTALLED_APPS = [
 	'django.contrib.sessions',
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
+	'django_auth_network_client',
 	'bootstrap3', # django-bootstrap3
 ]
 
@@ -146,21 +147,6 @@ DEFAULT_FROM_EMAIL = 'Covoiturage JDem <covoiturage@jdem.fr>'
 EMAIL_SHOULD_FAIL_SILENTLY = True 
 
 EMAIL_BACKEND = "anymail.backends.mailgun.MailgunBackend"  # or sendgrid.SendGridBackend, or...
-
-
-
-
-
-# DJANGO AUTH NETWORK CLIENT
-
-INSTALLED_APPS += ['django_auth_network_client',]
-''' The following values must be set in local settings '''
-NETWORK_AUTH_URL	= 'PLEASE SET NETWORK_AUTH_URL' # e.g. : 'http://localhost:8007/'
-NETWORK_AUTH_KEY	= 'PLEASE SET NETWORK_AUTH_KEY' # UUID
-NETWORK_AUTH_SECRET	= 'PLEASE SET NETWORK_AUTH_SECRET' # UUID
-
-
-
 
 
 
