@@ -25,6 +25,7 @@ INSTALLED_APPS = [
 	'django.contrib.sessions',
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
+	'django_auth_network_client',
 	'bootstrap3', # django-bootstrap3
 ]
 
@@ -130,8 +131,9 @@ STATICFILES_DIRS = (
 	os.path.join((PROJECT_ROOT), "static", "static"),
 )
 
-LOGIN_URL = '/login/'
+LOGIN_URL = '/auth/'
 LOGIN_REDIRECT_URL = '/'
+LOGOUT_URL = '/logout/'
 
 
 #
@@ -141,21 +143,12 @@ LOGIN_REDIRECT_URL = '/'
 INSTALLED_APPS += ['anymail',]
 
 EMAIL_SUBJECT_PREFIX = '[Covoiturage JDem] ' # standard setting
-DEFAULT_FROM_EMAIL = "Covoiturage JDem <covoiturage@mailgun.mydomain.fr>"
+DEFAULT_FROM_EMAIL = 'Covoiturage JDem <covoiturage@jdem.fr>'
 EMAIL_SHOULD_FAIL_SILENTLY = True 
 
 EMAIL_BACKEND = "anymail.backends.mailgun.MailgunBackend"  # or sendgrid.SendGridBackend, or...
 
-ANYMAIL = {
-	"MAILGUN_API_KEY": "key-7339362bdf13cc475b5666b6979d422b",
-	"MAILGUN_SENDER_DOMAIN": "mailgun.jdem.fr",
-}
 
-
-
-#
-#
-#
 
 
 from django.contrib import messages
@@ -166,3 +159,7 @@ APPEND_SLASH = True
 ##########################
 #  Settings localisables :
 ##########################
+
+# import local_settings if exist
+try: from local_settings import *
+except ImportError: pass

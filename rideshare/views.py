@@ -57,7 +57,7 @@ class EventRides(ListView):
 		context = super(EventRides, self).get_context_data(**kwargs)
 		context['event'] = Event.objects.get(slug=self.kwargs['slug']) 
 		context['page_title'] = context['event'].name
-		context['login_url'] = settings.LOGIN_URL
+		context['meta'] = context_meta() 
 		return context
 
 
@@ -405,3 +405,14 @@ def SendTestEmail(request):
 		)
 		messages.success(request, 'Email correctement envoyé !')
 	return redirect('rideshare_event_list')
+
+
+
+def context_meta() :
+	# Common elements used by the navbar on multiple pages
+	meta = {}
+	meta['login_url'] = settings.LOGIN_URL
+	meta['logout_url'] = settings.LOGOUT_URL
+	# Checks if there is more than one event running at a time
+	meta['multiple_events'] = Event.objects.filter(done=False).count() > 1
+	return meta

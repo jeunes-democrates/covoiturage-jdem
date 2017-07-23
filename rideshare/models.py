@@ -31,6 +31,7 @@ class Event(models.Model):
 	location = models.ForeignKey(Location)
 	start_date = models.DateTimeField(default=datetime.now)
 	end_date = models.DateTimeField(default=datetime.now)
+	done = models.BooleanField(default=False)
 
 	def __str__(self):
 		return self.name
