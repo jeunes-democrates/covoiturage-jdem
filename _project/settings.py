@@ -142,8 +142,8 @@ LOGOUT_URL = '/logout/'
 
 INSTALLED_APPS += ['anymail',]
 
-EMAIL_SUBJECT_PREFIX = '[Covoiturage JDem] ' # standard setting
-DEFAULT_FROM_EMAIL = 'Covoiturage JDem <covoiturage@jdem.fr>'
+EMAIL_SUBJECT_PREFIX = '[Covoitorange] ' # standard setting
+DEFAULT_FROM_EMAIL = 'Covoitorange <covoiturage@jdem.fr>'
 EMAIL_SHOULD_FAIL_SILENTLY = True 
 
 EMAIL_BACKEND = "anymail.backends.mailgun.MailgunBackend"  # or sendgrid.SendGridBackend, or...
