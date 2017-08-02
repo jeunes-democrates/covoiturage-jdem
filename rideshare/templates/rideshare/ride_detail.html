@@ -59,12 +59,11 @@
 
 <hr/>
 
-{% if user not in users_who_are_riders %}
+{% if user not in users_who_are_riders and user != object.owner %}
 <div class="ride__interactions">
 	<a class="ride__join btn btn-primary btn-block" href="{% url 'rideshare_join_ride' object.pk %}">
 		<i class="fa fa-arrow-circle-right"></i>&nbsp;
-		{% if object.owner == user %}Je m'ajoute à la liste des voyageurs
-		{% elif object.rider_set.all.count >= object.seats %}Je m'ajoute à la liste d'attente
+		{% if object.rider_set.all.count >= object.seats %}Je m'ajoute à la liste d'attente
 		{% else %}Je souhaite participer à ce trajet
 		{% endif %}
 	</a>

@@ -171,13 +171,9 @@ class UpdateRide(LoginRequiredMixin, UpdateView):
 
 def JoinRide(request, pk):
 	ride = get_object_or_404(Ride, pk=pk)
-	if request.user.is_authenticated():
-		user = request.user
+	user = request.user
+	if user.is_authenticated() and user != ride.owner :
 		user_pk = user.pk
-		if request.user == ride.owner :
-			rider = Rider(ride=ride, user=user, name=user.get_full_name(), email=user.email, phone=ride.phone, message='', accepted=True)
-			rider.save()
-			return redirect('rideshare_ride_detail', pk=ride.pk)
 	else :
 		user_pk = ""
 	return render(request, 'rideshare/ride_join_form.html', {'ride_pk': pk, 'user_pk': user_pk, 'page_title': 'Nouveau passager'})
