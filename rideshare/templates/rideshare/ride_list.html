@@ -95,7 +95,7 @@
 			<div class="ride__remaining-seats ride__data-wrapper">
 				<div class="ride__data-title">Sièges restants</div>
 				<div class="ride__data-point">
-					{% if ride.rider__count == ride.seats %}
+					{% if ride.rider__count >= ride.seats %}
 					<span class="text-muted">Complet</span>
 					{% else %}
 					<strong><span
