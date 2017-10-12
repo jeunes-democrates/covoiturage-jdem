@@ -146,7 +146,7 @@ EMAIL_SUBJECT_PREFIX = '[Covoitorange] ' # standard setting
 DEFAULT_FROM_EMAIL = 'Covoitorange <covoiturage@jdem.fr>'
 EMAIL_SHOULD_FAIL_SILENTLY = True 
 
-EMAIL_BACKEND = "anymail.backends.mailgun.MailgunBackend"  # or sendgrid.SendGridBackend, or...
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"  # or sendgrid.SendGridBackend, or...
 
 
 
