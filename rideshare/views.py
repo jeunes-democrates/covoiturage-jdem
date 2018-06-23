@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import send_mail
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render, render_to_response, redirect
 from django.template import RequestContext

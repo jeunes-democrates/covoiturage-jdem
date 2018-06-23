@@ -28,7 +28,7 @@ class Event(models.Model):
 	name = models.CharField(max_length=48, unique=True)
 	slug = models.SlugField(max_length=48, unique=True)
 	description = models.CharField(max_length=5000)
-	location = models.ForeignKey(Location)
+	location = models.ForeignKey(Location, on_delete=models.CASCADE)
 	start_date = models.DateTimeField(default=datetime.now)
 	end_date = models.DateTimeField(default=datetime.now)
 	done = models.BooleanField(default=False)
@@ -39,8 +39,8 @@ class Event(models.Model):
 
 
 class Ride(models.Model):
-	event = models.ForeignKey(Event)
-	owner = models.ForeignKey(User, related_name="owned_ride")
+	event = models.ForeignKey(Event, on_delete=models.CASCADE)
+	owner = models.ForeignKey(User, related_name="owned_ride", on_delete=models.CASCADE)
 	phone = models.CharField(max_length=32, default="00 00 00 00 00", verbose_name=u'Numéro de téléphone')
 	riders = models.ManyToManyField(User, through="Rider", related_name="ride")
 	seats = models.SmallIntegerField(default=5, verbose_name=u'Nombre total de places')
@@ -60,8 +60,8 @@ class Ride(models.Model):
 
 
 class Stop(models.Model):
-	ride = models.ForeignKey(Ride)
-	location = models.ForeignKey(Location)
+	ride = models.ForeignKey(Ride, on_delete=models.CASCADE)
+	location = models.ForeignKey(Location, on_delete=models.CASCADE)
 	time = models.DateTimeField()
 
 	def __str__(self):
@@ -73,7 +73,7 @@ class Stop(models.Model):
 
 class Rider(models.Model):
 	ride = models.ForeignKey(Ride, on_delete=models.CASCADE)
-	user = models.ForeignKey(User, null=True, blank=True)
+	user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 #	joining_stop = models.ForeignKey(Stop, related_name='joining_rider') TODO : use these
 #	leaving_stop = models.ForeignKey(Stop, related_name='leaving_rider')
 	name = models.CharField(max_length=64, default="No Name")
