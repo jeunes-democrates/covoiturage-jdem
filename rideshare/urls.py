@@ -15,5 +15,5 @@ urlpatterns = [
 	url(r'^rider/(?P<pk>[0-9]+)/deny/$', views.DenyRider, name='rideshare_rider_deny'),
 	url(r'^rider/(?P<pk>[0-9]+)/delete/$', views.DeleteRider, name='rideshare_rider_delete'),
 	url(r'^email/$', views.SendTestEmail, name='rideshare_send_test_email'),
-	url(r'^$', RedirectView.as_view(url="events", permanent=False)),
+	url(r'^$', RedirectView.as_view(url="events/", permanent=False)),
 ]

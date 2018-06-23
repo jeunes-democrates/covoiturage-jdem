@@ -11,5 +11,5 @@ urlpatterns = [
 	url(r'^auth/', include('django_auth_network_client.urls')),
 	url(r'^arriere-boutique/', admin.site.urls, name='admin'),
 	url(r'^covoiturage/', include('rideshare.urls')),
-	url(r'^$', RedirectView.as_view(url="/covoiturage", permanent=False)),
+	url(r'^$', RedirectView.as_view(url="/covoiturage/", permanent=False)),
 ]
