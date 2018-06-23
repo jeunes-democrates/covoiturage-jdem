@@ -5,3 +5,4 @@ requests
 six
 unicode-slugify
 Unidecode
+django-auth-network-client
